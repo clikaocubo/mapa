@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: mapa-interativo
+    env: static
+    buildCommand: ""
+    staticPublishPath: "./"
