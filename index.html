@@ -3960,58 +3960,8 @@
 
 
     <script>
-        // Variável para controle de arrasto e zoom
+        // Variável para controle de arrasto
         let arrastando = false;
-        let isZoomed = false;
-        
-        // Função para alternar o zoom do mapa
-        function toggleZoom(event) {
-            const svg = document.getElementById('map-svg');
-            
-            // Se já estiver com zoom, volta ao normal
-            if (isZoomed) {
-                svg.style.transform = 'scale(1)';
-                svg.style.transformOrigin = 'center';
-            } 
-            // Se não estiver com zoom, aplica o zoom no local clicado
-            else {
-                // Obtém a posição do clique em relação ao SVG
-                const rect = svg.getBoundingClientRect();
-                const x = (event.clientX - rect.left) / rect.width;
-                const y = (event.clientY - rect.top) / rect.height;
-                
-                // Ajusta a origem da transformação para o local do clique
-                const originX = x * 100 + '%';
-                const originY = y * 100 + '%';
-                
-                // Aplica o zoom com transição suave
-                svg.style.transformOrigin = `${originX} ${originY}`;
-                svg.style.transform = 'scale(1.5)';
-            }
-            
-            isZoomed = !isZoomed;
-        }
-        
-        // Adiciona o evento de duplo clique ao carregar a página
-        document.addEventListener('DOMContentLoaded', function() {
-            const svg = document.getElementById('map-svg');
-            
-            // Configura a transição suave para o zoom
-            svg.style.transition = 'transform 0.3s ease-out';
-            
-            // Adiciona o evento de duplo clique
-            svg.addEventListener('dblclick', function(event) {
-                event.preventDefault();
-                toggleZoom(event);
-            });
-            
-            // Permite sair do zoom clicando fora do mapa
-            document.addEventListener('click', function(event) {
-                if (isZoomed && !svg.contains(event.target)) {
-                    toggleZoom(event);
-                }
-            });
-        });
         
         // Adiciona eventos de clique a todos os botões circulares
         document.addEventListener('DOMContentLoaded', function() {
