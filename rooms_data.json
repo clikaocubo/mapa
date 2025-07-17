@@ -3,7 +3,7 @@
     {
       "id": "sala1",
       "nome": "Sala 1",
-      "status": "inativo",
+      "status": "ativo",
       "capacidade": 30,
       "ocupacao": 15,
       "temperatura": 22,

@@ -1,0 +1,458 @@
+/* Botão centralizado responsivo */
+.center-button {
+    position: fixed;
+    top: calc(30% - 50px); /* 30% do topo - 50px */
+    /* Garante que não fique muito próximo ao topo em telas pequenas */
+    top: max(20px, calc(30% - 50px));
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40vw; /* Largura relativa à largura da viewport */
+    max-width: 200px; /* Largura máxima para telas grandes */
+    height: 8vh; /* Altura relativa à altura da viewport */
+    min-height: 40px; /* Altura mínima para telas pequenas */
+    max-height: 60px; /* Altura máxima para telas grandes */
+    border-radius: 8px;
+    background-color: #1E59D9;
+    color: white;
+    border: none;
+    font-size: clamp(16px, 3vw, 24px); /* Tamanho de fonte responsivo */
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    transition: all 0.3s ease;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+.center-button:hover {
+    background-color: #1a4fbf;
+    transform: translateX(-50%) scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.center-button:active {
+    transform: translateX(-50%) scale(0.95);
+}
+
+/* Botão de ajuda personalizado */
+.help-button {
+    position: fixed;
+    top: 800px;
+    right: 30px;
+    background-color: #1E59D9;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    text-decoration: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.help-button:hover {
+    background-color: #1a4fbf;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.help-button:active {
+    transform: translateY(0);
+}
+
+/* Animações de fundo */
+.background-animations {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/* Animações para os elementos de fundo */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0) translateX(0);
+    }
+    50% {
+        transform: translateY(-20px) translateX(10px);
+    }
+}
+
+/* Estilos gerais */
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #050917;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    overflow-x: hidden;
+    touch-action: manipulation;
+    position: relative;
+    color: #ffffff;
+}
+
+/* Fundo */
+.background-animations {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #050917;
+    z-index: -1;
+}
+
+/* Container do mapa */
+.map-container {
+    position: relative;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    touch-action: pan-y pinch-zoom;
+    overflow: visible;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+/* Ajustes para telas grandes */
+@media (min-width: 768px) {
+    .map-container {
+        max-width: 768px;
+        padding: 20px;
+    }
+}
+
+/* Ajustes para telas muito grandes */
+@media (min-width: 1200px) {
+    .map-container {
+        max-width: 1000px;
+    }
+}
+
+/* Ajustes para telas pequenas */
+@media (max-width: 480px) {
+    .map-container {
+        padding: 10px 5px;
+    }
+    
+    /* Ajuste fino para botões em telas muito pequenas */
+    .circle-button {
+        width: 45px !important;
+        height: 45px !important;
+        font-size: 10px !important;
+    }
+    
+    /* Ajuste de posicionamento para telas pequenas */
+    .room-button {
+        transform: scale(0.9);
+    }
+}
+
+/* Botões circulares */
+.circle-button {
+    transition: filter 0.3s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    /* Tamanho base responsivo */
+    width: 50px;
+    height: 50px;
+    font-size: 12px;
+    
+    /* Ajustes para telas médias */
+    @media (min-width: 480px) {
+        width: 60px;
+        height: 60px;
+        font-size: 14px;
+    }
+    
+    /* Ajustes para telas grandes */
+    @media (min-width: 768px) {
+        width: 70px;
+        height: 70px;
+        font-size: 16px;
+    }
+    
+    /* Ajustes para telas muito grandes */
+    @media (min-width: 1200px) {
+        width: 80px;
+        height: 80px;
+        font-size: 18px;
+    }
+    filter: drop-shadow(0 0 5px rgba(64, 156, 255, 0.7));
+    transform-origin: center;
+    transform: translateZ(0);
+    will-change: transform, filter;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: subpixel-antialiased;
+}
+
+.circle-button:hover, .circle-button:active {
+    filter: drop-shadow(0 0 8px rgba(64, 156, 255, 0.9));
+}
+
+/* Visualização da sala */
+.room-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(10, 17, 40, 0.95);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    overflow: auto;
+    transform: translateY(20px);
+    padding: 20px 0;
+}
+
+.room-view.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.room-content {
+    width: 90%;
+    max-width: 500px;
+    background-color: rgba(26, 42, 108, 0.95);
+    border-radius: 16px;
+    padding: 24px;
+    color: white;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 2;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Barra superior */
+.top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(10, 17, 40, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 90;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    color: white;
+}
+
+.controls {
+    display: flex;
+    gap: 12px;
+}
+
+.control-btn {
+    background-color: rgba(64, 156, 255, 0.2);
+    border: 1px solid rgba(64, 156, 255, 0.3);
+    color: white;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.control-btn:hover, .control-btn:active {
+    background-color: rgba(64, 156, 255, 0.3);
+}
+
+/* Cabeçalho da sala */
+.room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.room-title {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0;
+    color: #fff;
+}
+
+/* Status da sala */
+.room-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-active {
+    background-color: rgba(76, 175, 80, 0.9);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status-inactive {
+    background-color: rgba(244, 67, 54, 0.9);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+/* Informações da sala */
+.room-info {
+    margin-bottom: 24px;
+}
+
+.info-row {
+    display: flex;
+    margin-bottom: 12px;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.info-row:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.info-label {
+    width: 110px;
+    font-weight: 500;
+    opacity: 0.9;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.info-value {
+    flex: 1;
+    font-weight: 500;
+    font-size: 15px;
+}
+
+/* Botão de voltar */
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(64, 156, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(64, 156, 255, 0.3);
+    padding: 10px 18px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    margin-top: 24px;
+    transition: all 0.2s ease;
+    width: 100%;
+    max-width: 200px;
+}
+
+.back-btn:hover, .back-btn:active {
+    background-color: rgba(64, 156, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Efeitos de zoom */
+.zoom-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    z-index: 210;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.zoom-circle {
+    position: absolute;
+    border-radius: 50%;
+    background-color: #1E59D9;
+    transform: translate(-50%, -50%) scale(0);
+    transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+    opacity: 0.9;
+}
+
+.zoom-circle.zooming {
+    transform: translate(-50%, -50%) scale(50);
+    opacity: 0.2;
+}
+
+/* Animações */
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 2px rgba(255,255,255,0.7));
+    }
+    50% {
+        transform: scale(1.2);
+        filter: drop-shadow(0 0 8px rgba(255,255,255,0.9));
+    }
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+    .info-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .info-label {
+        width: 100%;
+        margin-bottom: 4px;
+        font-size: 12px;
+    }
+    
+    .info-value {
+        font-size: 14px;
+    }
+}

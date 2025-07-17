@@ -2,19 +2,85 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#040A19">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Mapa Interativo</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/device-fixes.css">
+    <link rel="stylesheet" href="assets/css/responsive.css">
     <!-- Socket.IO -->
     <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- Script de detecção de dispositivos -->
+    <script src="assets/js/device-detection.js"></script>
+    
+    <!-- Script principal da aplicação -->
+    <script>
+        // Espera o DOM estar completamente carregado
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializa o Socket.IO apenas se ainda não estiver inicializado
+            if (typeof io === 'function' && !window.socket) {
+                window.socket = io();
+                console.log('Socket.IO inicializado com sucesso');
+            }
+            
+            // Carrega os scripts na ordem correta
+            const scripts = [
+                'assets/js/button-fix.js', // Script de correção do botão
+                'script.js',               // Configurações dos botões
+                'assets/js/app.js'         // Script principal da aplicação
+            ];
+            
+            function loadScript(index) {
+                if (index >= scripts.length) {
+                    console.log('Todos os scripts foram carregados com sucesso');
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = scripts[index];
+                script.onload = function() {
+                    console.log(scripts[index] + ' carregado com sucesso');
+                    loadScript(index + 1);
+                };
+                script.onerror = function() {
+                    console.error('Erro ao carregar ' + scripts[index]);
+                    loadScript(index + 1); // Continua carregando os próximos scripts mesmo se um falhar
+                };
+                document.body.appendChild(script);
+            }
+            
+            // Inicia o carregamento dos scripts
+            loadScript(0);
+        });
+    </script>
     <style>
+        /* Reset e estilos base */
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            -webkit-text-size-adjust: 100%;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Prevenir zoom em inputs em iOS */
+        @media screen and (-webkit-min-device-pixel-ratio:0) { 
+            select:focus,
+            textarea:focus,
+            input:focus {
+                font-size: 16px;
+            }
+        }
+        
+        /* Melhorar a legibilidade em dispositivos móveis */
+        html {
+            -webkit-text-size-adjust: 100%;
+            height: 100%;
         }
         
         body {
@@ -513,16 +579,159 @@
             }
         }
     </style>
+    <!-- Estilos movidos para assets/css/main.css -->
 </head>
 <body>
-    <div class="info-box">
-    </div>
+    <!-- Container para animações de fundo -->
+    <div id="backgroundAnimations" class="background-animations"></div>
     
-    <!-- Mapa interativo -->
-    <div style="display: flex; justify-content: center; align-items: center; width: 100%; min-height: 100vh; overflow: hidden;">
-        <svg width="504" height="920" viewBox="0 0 630 1100" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform: scale(0.8); transform-origin: center;">
-    <defs>
-        <!-- Drop shadow filter for circular buttons -->
+    <!-- Botão de Ajuda -->
+    <button id="customButton" class="help-button">Ajuda</button>
+    
+    <!-- Botão Centralizado -->
+    <button id="centerButton" class="center-button" onclick="window.open('https://www.mercadolivre.com.br', '_blank')">+</button>
+    <style>
+        /* Estilo base para o botão central */
+        #centerButton {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 400px;
+            height: 100px;
+            top: 0;
+            opacity: 0; /* Torna o botão invisível */
+            background-color: transparent; /* Remove o fundo */
+            color: transparent; /* Torna o texto transparente */
+            border: none;
+            cursor: pointer;
+            z-index: 9999;
+            padding: 0;
+            margin: 0;
+            pointer-events: auto; /* Garante que o botão ainda seja clicável */
+        }
+
+        /* Dispositivos muito pequenos (até 360px) */
+        @media (max-width: 360px) {
+            #centerButton {
+                top: 140px;
+                height: 45px;
+                font-size: 20px;
+                width: 90%;
+            }
+        }
+
+        /* Dispositivos pequenos (361px - 400px) - Moto G4, Galaxy S5, etc */
+        @media (min-width: 361px) and (max-width: 400px) {
+            #centerButton {
+                top: 150px;
+                width: 88%;
+            }
+        }
+
+        /* Dispositivos médios (401px - 480px) - Pixel, Pixel 2, etc */
+        @media (min-width: 401px) and (max-width: 480px) {
+            #centerButton {
+                top: 160px;
+                width: 85%;
+            }
+        }
+
+        /* Dispositivos grandes (481px - 600px) - Pixel 3, etc */
+        @media (min-width: 481px) and (max-width: 600px) {
+            #centerButton {
+                top: 170px;
+                width: 82%;
+            }
+        }
+
+        /* Tablets pequenos (601px - 768px) */
+        @media (min-width: 601px) and (max-width: 768px) {
+            #centerButton {
+                top: 180px;
+                width: 70%;
+                max-width: 400px;
+                height: 55px;
+                font-size: 24px;
+            }
+        }
+
+        /* Tablets grandes (769px - 1024px) */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            #centerButton {
+                top: 200px;
+                width: 60%;
+                max-width: 450px;
+                height: 60px;
+                font-size: 26px;
+            }
+        }
+
+        /* Desktop (1025px+) */
+        @media (min-width: 1025px) {
+            #centerButton {
+                top: 220px;
+                width: 40%;
+                max-width: 500px;
+                height: 65px;
+                font-size: 28px;
+            }
+        }
+
+        /* iPhone X/XS/11 Pro/12/13 Mini */
+        @media (max-width: 400px) and (min-height: 800px) {
+            #centerButton {
+                top: 180px;
+            }
+        }
+
+        /* iPhone 12/13 Pro/Pro Max */
+        @media (min-width: 390px) and (max-width: 430px) and (min-height: 840px) {
+            #centerButton {
+                top: 190px;
+            }
+        }
+
+        /* Efeito ao pressionar */
+        #centerButton:active {
+            background-color: #1a4fbf;
+            transform: translateX(-50%) scale(0.97);
+        }
+
+        /* Efeito hover apenas em dispositivos com mouse */
+        @media (hover: hover) and (pointer: fine) {
+            #centerButton:hover {
+                background-color: #1a4fbf;
+                transform: translateX(-50%) scale(1.03);
+            }
+        }
+
+        /* Ajuste para modo paisagem */
+        @media (max-height: 500px) {
+            #centerButton {
+                top: 100px !important;
+                height: 40px !important;
+                font-size: 18px !important;
+            }
+        }
+    </style>
+    
+    <svg id="map-svg" viewBox="0 0 1100 800" preserveAspectRatio="xMidYMid meet" fill="none" xmlns="http://www.w3.org/2000/svg">
+    
+                <!-- Botão editável pelo admin -->
+                <a id="admin-button" href="#" target="_blank" style="cursor: pointer;">
+                    <rect x="500" y="20" width="100" height="40" rx="8" fill="#1E59D9" />
+                    <text x="550" y="45" text-anchor="middle" fill="white" font-family="Arial" font-size="14">
+                        <tspan id="admin-button-text">Botão Admin</tspan>
+                    </text>
+                </a>
+                
+                <!-- Área clicável do mapa -->
+                <a id="map-area-button" class="map-area" xlink:href="#" style="cursor: pointer; opacity: 1; position: absolute; z-index: 1000;">
+                    <rect x="300" y="350" width="200" height="200" fill="rgba(255, 0, 0, 0.5)" stroke="red" stroke-width="2" />
+                    <text x="400" y="450" text-anchor="middle" fill="white" font-weight="bold">BOTÃO DO MAPA</text>
+                </a>
+        
         <filter id="filter20_d_2031_70" x="345" y="908" width="41" height="41" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
             <feFlood flood-opacity="0" result="BackgroundImageFix"/>
             <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
@@ -547,7 +756,7 @@
     <image href="assets/svg/SITE SVG.svg" width="730"/>
     
     <g transform="translate(185, 300) scale(0.45)">
-    <image href="assets/img/LOGO-PATROCINADORES.png" x="" y="1550" width="790" height="85"/>
+    <image href="assets/img/LOGO-PATROCINADORES.png" x="0" y="1550" width="790" height="85"/>
     <path d="M416 1110.5V1490.5H342.059L341.851 1490.52C341.669 1490.53 341.4 1490.55 341.042 1490.56C340.326 1490.6 339.252 1490.63 337.799 1490.64C334.891 1490.66 330.463 1490.58 324.334 1490.15C312.076 1489.3 293.013 1487.11 265.71 1481.72C238.445 1476.34 219.428 1472.15 207.222 1469.3C201.119 1467.88 196.718 1466.79 193.841 1466.06C192.402 1465.69 191.343 1465.42 190.644 1465.23C190.294 1465.14 190.034 1465.06 189.86 1465.02C189.774 1464.99 189.708 1464.98 189.664 1464.96C189.643 1464.96 189.626 1464.95 189.615 1464.95C189.61 1464.95 189.605 1464.95 189.602 1464.95C189.6 1464.95 189.599 1464.95 189.599 1464.95H189.598C189.597 1464.95 189.597 1464.94 190 1463.5L189.597 1464.94L188.181 1464.55L188.548 1463.13L235.548 1280.63L235.837 1279.5H246V1110.5H416Z" fill="#BDBDBD" stroke="#7A7A7A" stroke-width="3"/>
     <path d="M526.5 343.5V380.5H317.845V690.5H414.5V724.5H317.845V960.5H442.444V1073.5H317.845V1110.5H256.5V343.5H526.5Z" fill="#D9D9D9" stroke="#7A7A7A" stroke-width="3"/>
     <rect x="98.5" y="960.5" width="158" height="113" fill="url(#paint0_linear_2031_70)" stroke="#7A7A7A" stroke-width="3"/>
@@ -1579,8 +1788,8 @@
         <text x="365.5" y="565" fill="white" font-size="10" text-anchor="middle" pointer-events="none" font-weight="bold">5</text>
     </g>
     <g filter="url(#filter25_d_2031_70)">
-        <circle class="circle-button" cx="364.5" cy="481.5" r="10.5" fill="#1E59D9" data-circle="6"/>
-        <text x="364.5" y="486" fill="white" font-size="10" text-anchor="middle" pointer-events="none" font-weight="bold">6</text>
+        <circle class="circle-button" cx="365.0" cy="481.5" r="10.5" fill="#1E59D9" data-circle="6"/>
+        <text x="365.0" y="486" fill="white" font-size="10" text-anchor="middle" pointer-events="none" font-weight="bold">6</text>
     </g>
     <g filter="url(#filter26_d_2031_70)">
         <circle class="circle-button" cx="364.5" cy="405.5" r="10.5" fill="#1E59D9" data-circle="7"/>
@@ -1639,8 +1848,6 @@
                 </svg>
                 Voltar ao mapa
             </button>
-        </div>
-    </div>
     
     <!-- Legenda -->
     <div id="legendPanel" style="position: fixed; top: 60px; right: 20px; background-color: rgba(4, 10, 25, 0.9); padding: 15px; border-radius: 10px; z-index: 150; display: none; max-width: 250px; box-shadow: 0 2px 10px rgba(0,0,0,0.5);">
@@ -1677,11 +1884,7 @@
         <button id="closeHelp" style="position: absolute; top: 5px; right: 5px; background: none; border: none; color: white; font-size: 16px; cursor: pointer;">&times;</button>
     </div>
     
-    <!-- Barra de status -->
-    <div style="position: fixed; bottom: 0; left: 0; right: 0; background-color: rgba(4, 10, 25, 0.9); padding: 8px; z-index: 100; display: flex; justify-content: space-between; font-size: 12px; color: white;">
-        <div>Salas ativas: <span id="activeSalasCount">0</span>/<span id="totalSalasCount">10</span></div>
-        <div>Horário atual: <span id="currentTime">--:--</span></div>
-    </div>
+    <!-- Barra de status removida -->
 
     <script>
         // Cria animações de fundo
@@ -1869,7 +2072,7 @@
         // Não precisamos mais definir roomInfo aqui, pois usamos roomsData
         
         // Elementos DOM
-        const mapContainer = document.getElementById('mapContainer');
+        let mapContainer; // Será inicializado quando o DOM estiver pronto
         const roomView = document.getElementById('roomView');
         const roomTitle = document.getElementById('roomTitle');
         const roomStatus = document.getElementById('roomStatus');
@@ -1881,11 +2084,50 @@
         const backBtn = document.getElementById('backBtn');
         const zoomEffect = document.getElementById('zoomEffect');
         const roomParticles = document.getElementById('roomParticles');
+        
         // Variáveis para controle de zoom e pan
         let currentScale = 1;
         let isDragging = false;
         let startX, startY, translateX = 0, translateY = 0;
         let lastTranslateX = 0, lastTranslateY = 0;
+        /**
+         * Aplica as transformações de zoom e pan no container do mapa
+         */
+        function applyTransform() {
+            try {
+                // Garante que o mapContainer existe e está acessível
+                if (!mapContainer || !mapContainer.style) {
+                    console.warn('mapContainer não está disponível para aplicar transformações');
+                    return;
+                }
+                
+                // Limita os valores de translação para evitar que o mapa saia muito da tela
+                const maxTranslateX = (mapContainer.offsetWidth * (currentScale - 1)) / 2;
+                const maxTranslateY = (mapContainer.offsetHeight * (currentScale - 1)) / 2;
+                
+                translateX = Math.max(-maxTranslateX, Math.min(translateX, maxTranslateX));
+                translateY = Math.max(-maxTranslateY, Math.min(translateY, maxTranslateY));
+                
+                // Aplica a transformação
+                mapContainer.style.transform = `scale(${currentScale}) translate(${translateX}px, ${translateY}px)`;
+                lastTranslateX = translateX;
+                lastTranslateY = translateY;
+            } catch (error) {
+                console.error('Erro ao aplicar transformação:', error);
+            }
+        }
+        
+        /**
+         * Reseta a visualização do mapa para o estado inicial
+         */
+        function resetMapView() {
+            currentScale = 1;
+            translateX = 0;
+            translateY = 0;
+            lastTranslateX = 0;
+            lastTranslateY = 0;
+            applyTransform();
+        }
         
         // Função para configurar zoom adaptativo em dispositivos móveis
         function setupAdaptiveZoom() {
@@ -2128,67 +2370,95 @@
         
         // Função para atualizar a cor do círculo com base no status da sala
         function updateCircleColor(circle, roomNumber) {
+            console.log(`\n--- Iniciando updateCircleColor para sala ${roomNumber} ---`);
+            
             // Verifica se roomsData está definido e é um array
             if (!window.roomsData || !Array.isArray(window.roomsData)) {
-                console.log('roomsData não está definido ou não é um array');
+                console.warn('roomsData não está definido ou não é um array');
                 window.roomsData = [];
                 return;
             }
             
-            console.log('Atualizando cor do círculo para a sala:', roomNumber);
-            console.log('Dados das salas disponíveis:', window.roomsData);
+            console.log(`Procurando dados para a sala ${roomNumber}...`);
+            console.log('Todas as salas disponíveis:', JSON.stringify(window.roomsData, null, 2));
             
             // Procura a sala pelo ID (tanto '1' quanto 'sala1')
-            const roomData = window.roomsData.find(r => r && (
-                r.id === roomNumber.toString() || 
-                r.id === `sala${roomNumber}` ||
-                r.id === `Sala ${roomNumber}`
-            ));
+            const roomData = window.roomsData.find(r => {
+                if (!r) return false;
+                const roomId = r.id ? r.id.toString() : '';
+                return (
+                    roomId === roomNumber.toString() || 
+                    roomId === `sala${roomNumber}` ||
+                    roomId === `Sala ${roomNumber}`
+                );
+            });
             
             console.log('Dados encontrados para a sala:', roomData);
             
+            if (!roomData) {
+                console.warn(`Nenhum dado encontrado para a sala ${roomNumber}`);
+                circle.style.fill = roomColors.active; // Cor padrão
+                circle.classList.remove('inactive-pulse');
+                return;
+            }
+            
+            const status = roomData.status ? roomData.status.toString().toLowerCase() : '';
+            console.log(`Status da sala ${roomNumber}:`, status);
+            
             // Verifica se a sala está inativa (considerando diferentes formatos possíveis)
-            const isInactive = roomData && (
-                roomData.status === 'inativo' || 
-                roomData.status === 'Inativo' ||
-                roomData.status === 'desativado' ||
-                roomData.status === 'Desativado' ||
-                (roomData.status && roomData.status.toLowerCase().includes('inativo')) ||
-                (roomData.status && roomData.status.toLowerCase().includes('desativado')) ||
-                (roomData.status && roomData.status.toLowerCase() !== 'ativo' && roomData.status.toLowerCase() !== 'Ativo')
+            const isInactive = (
+                status === 'inativo' || 
+                status === 'desativado' ||
+                status.includes('inativo') ||
+                status.includes('desativado') ||
+                (status && status !== 'ativo')
             );
             
             console.log(`Sala ${roomNumber} está inativa?`, isInactive);
             
             if (isInactive) {
+                console.log(`Definindo cor vermelha para a sala ${roomNumber}`);
                 circle.style.fill = roomColors.inactive;
                 circle.classList.add('inactive-pulse');
-                console.log(`Definindo cor vermelha para a sala ${roomNumber}`);
+                console.log('Classe do botão após atualização:', circle.className.baseVal || circle.className);
             } else {
+                console.log(`Definindo cor azul para a sala ${roomNumber}`);
                 circle.style.fill = roomColors.active;
                 circle.classList.remove('inactive-pulse');
-                console.log(`Definindo cor azul para a sala ${roomNumber}`);
             }
+            
+            console.log(`--- Finalizado updateCircleColor para sala ${roomNumber} ---\n`);
         }
 
         // Atualiza a cor de todos os círculos
         function updateAllCircleColors() {
+            console.log('Iniciando updateAllCircleColors...');
             // Verifica se roomsData está definido e é um array
             if (!window.roomsData || !Array.isArray(window.roomsData)) {
                 // Se não estiver definido, define como array vazio para evitar erros
                 window.roomsData = [];
                 console.log('roomsData não inicializado, definindo como array vazio');
+            } else {
+                console.log(`roomsData contém ${window.roomsData.length} salas`);
             }
             
-            document.querySelectorAll('.circle-button').forEach(circle => {
+            const circleButtons = document.querySelectorAll('.circle-button');
+            console.log(`Encontrados ${circleButtons.length} botões de círculo`);
+            
+            circleButtons.forEach((circle, index) => {
                 const roomNumber = circle.getAttribute('data-circle');
+                console.log(`Processando botão ${index + 1}/${circleButtons.length} - Sala: ${roomNumber}`);
                 if (roomNumber) {
                     updateCircleColor(circle, roomNumber);
+                } else {
+                    console.warn(`Botão sem atributo data-circle:`, circle);
                 }
             });
             
+            console.log('Chamando updateActiveRoomsCounter...');
             // Atualiza o contador de salas ativas
             updateActiveRoomsCounter();
+            console.log('updateAllCircleColors concluído');
         }
 
         // Adiciona eventos de clique aos círculos
@@ -2207,10 +2477,62 @@
                 const circleBounds = this.getBoundingClientRect();
                 const centerX = circleBounds.left + circleBounds.width / 2;
                 const centerY = circleBounds.top + circleBounds.height / 2;
-                enterRoom(circleNumber, centerX, centerY);
+                
+                // Tenta encontrar a sala nos dados, verificando diferentes formatos de ID
+                const roomData = window.roomsData.find(r => {
+                    if (!r || !r.id) return false;
+                    
+                    // Normaliza os IDs para comparação
+                    const roomId = r.id.toString().toLowerCase().trim();
+                    const normalizedCircleNumber = circleNumber.toString().toLowerCase().trim();
+                    
+                    // Verifica diferentes formatos de ID
+                    return (
+                        roomId === normalizedCircleNumber || 
+                        roomId === `sala${normalizedCircleNumber}` ||
+                        roomId === `sala ${normalizedCircleNumber}` ||
+                        roomId === `sala-${normalizedCircleNumber}` ||
+                        roomId === `sala_${normalizedCircleNumber}` ||
+                        roomId === `room${normalizedCircleNumber}` ||
+                        roomId === `room ${normalizedCircleNumber}` ||
+                        roomId === `sala${normalizedCircleNumber.padStart(2, '0')}` ||
+                        roomId.endsWith(normalizedCircleNumber) ||
+                        roomId.includes(normalizedCircleNumber)
+                    );
+                });
+                
+                console.log('Dados da sala encontrados:', roomData);
+                
+                // Verifica se a sala está inativa
+                let isInactive = false;
+                
+                if (roomData && roomData.status) {
+                    const status = String(roomData.status).toLowerCase().trim();
+                    isInactive = [
+                        'inativo', 'desativado', 'inactive', 'disabled',
+                        'indisponível', 'manutenção', 'manutencao', 'bloqueado'
+                    ].some(inactiveStatus => status.includes(inactiveStatus));
+                    
+                    console.log(`Status da sala ${circleNumber}:`, roomData.status, '| Inativo?', isInactive);
+                } else {
+                    console.warn(`Status não encontrado para a sala ${circleNumber}`, roomData);
+                }
+                
+                if (isInactive) {
+                    console.log(`Sala ${circleNumber} está inativa.`);
+                    // Mostra o modal de aviso se a sala estiver inativa
+                    showWarningModal();
+                    return; // Impede execução adicional
+                } else if (roomData) {
+                    console.log(`Entrando na sala ${circleNumber}:`, roomData);
+                    // Caso contrário, entra na sala normalmente
+                    enterRoom(circleNumber, centerX, centerY);
+                } else {
+                    console.warn(`Nenhum dado encontrado para a sala ${circleNumber}`);
+                }
             });
             
-            // Efeito sutil de hover - removido transform para evitar trepidação
+            // Efeito sutil de hover
             circle.addEventListener('mouseenter', function() {
                 this.style.filter = 'drop-shadow(0 0 15px rgba(30, 89, 217, 0.9))';
             });
@@ -2249,6 +2571,13 @@
             // Busca os dados da sala nos dados atualizados do servidor
             const roomData = roomsData.find(r => r.id === roomNumber || r.id === `sala${roomNumber}`);
             if (!roomData) return;
+            
+            // Verifica se a sala está desativada
+            if (roomData.status === 'inativo') {
+                // Mostra o modal de aviso e encerra a função
+                showWarningModal();
+                return;
+            }
             
             // Limpa qualquer elemento anterior
             zoomEffect.innerHTML = '';
@@ -2435,22 +2764,39 @@
             }
         });
         
-        // Função para aplicar transformações de zoom e pan
-        function applyTransform() {
-            mapContainer.style.transform = `scale(${currentScale}) translate(${translateX}px, ${translateY}px)`;
+        
+        /**
+         * Configura os eventos de toque para interação com o mapa
+         */
+        function setupTouchEvents() {
+            if (!mapContainer) return;
+            
+            // Remove event listeners antigos para evitar duplicação
+            mapContainer.removeEventListener('touchstart', handleTouchStart);
+            mapContainer.removeEventListener('touchmove', handleTouchMove);
+            mapContainer.removeEventListener('touchend', handleTouchEnd);
+            mapContainer.removeEventListener('gesturestart', handleGestureStart);
+            
+            // Adiciona os novos event listeners
+            mapContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+            mapContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+            mapContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
+            mapContainer.addEventListener('gesturestart', handleGestureStart, { passive: false });
         }
         
-        // Eventos de toque para arrastar o mapa
-        mapContainer.addEventListener('touchstart', function(e) {
+        // Funções de manipulação de eventos
+        function handleTouchStart(e) {
             if (e.touches.length === 1) {
                 isDragging = true;
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
             }
-        });
+        }
         
-        mapContainer.addEventListener('touchmove', function(e) {
-            if (!isDragging) return;
+        function handleTouchMove(e) {
+            if (!isDragging || e.touches.length !== 1) return;
+            
+            e.preventDefault(); // Previne a rolagem da página durante o arrasto
             
             const touchX = e.touches[0].clientX;
             const touchY = e.touches[0].clientY;
@@ -2459,40 +2805,96 @@
             translateY = lastTranslateY + (touchY - startY) / currentScale;
             
             applyTransform();
-        });
+        }
         
-        mapContainer.addEventListener('touchend', function() {
+        function handleTouchEnd() {
             isDragging = false;
             lastTranslateX = translateX;
             lastTranslateY = translateY;
-        });
+        }
         
-        // Suporte a pinch-zoom nativo
-        mapContainer.addEventListener('gesturestart', function(e) {
+        function handleGestureStart(e) {
             e.preventDefault();
-        });
+        }
         
-        // Detecta orientação do dispositivo e ajusta a visualização
-        window.addEventListener('orientationchange', function() {
+        /**
+         * Configura os listeners de mudança de orientação
+         */
+        function setupOrientationChange() {
+            // Remove o listener antigo se existir
+            window.removeEventListener('orientationchange', handleOrientationChange);
+            
+            // Adiciona o novo listener
+            window.addEventListener('orientationchange', handleOrientationChange, { passive: true });
+        }
+        
+        function handleOrientationChange() {
             setTimeout(() => {
-                // Reset zoom e posição após mudança de orientação
-                currentScale = 1;
-                translateX = 0;
-                translateY = 0;
-                lastTranslateX = 0;
-                lastTranslateY = 0;
-                applyTransform();
+                resetMapView();
             }, 300);
-        });
+        }
         
-        // Gestos de toque para navegação
+        // Inicializa os eventos do mapa
+        function initMapEvents() {
+            console.log('Inicializando eventos do mapa...');
+            
+            try {
+                // Configura os eventos de toque
+                setupTouchEvents();
+                
+                // Configura a mudança de orientação
+                setupOrientationChange();
+                
+                // Aplica a transformação inicial
+                applyTransform();
+                
+                console.log('Eventos do mapa inicializados com sucesso');
+            } catch (error) {
+                console.error('Erro ao inicializar eventos do mapa:', error);
+                // Tenta novamente em caso de erro
+                setTimeout(initMapEvents, 1000);
+            }
+        }
+        
+        // Inicializa os eventos do mapa quando o DOM estiver pronto
+        function init() {
+            console.log('Inicializando aplicação...');
+            
+            const initApp = () => {
+                console.log('DOM completamente carregado, inicializando eventos do mapa...');
+                initMapEvents();
+                
+                // Carrega os dados das salas
+                console.log('Carregando dados das salas...');
+                loadRoomsData().then(() => {
+                    console.log('Dados das salas carregados com sucesso');
+                }).catch(error => {
+                    console.error('Erro ao carregar dados das salas:', error);
+                });
+            };
+            
+            if (document.readyState === 'loading') {
+                console.log('Aguardando carregamento do DOM...');
+                document.addEventListener('DOMContentLoaded', initApp);
+            } else {
+                console.log('DOM já está carregado, inicializando...');
+                // Usamos setTimeout para garantir que o restante do JS tenha sido carregado
+                setTimeout(initApp, 0);
+            }
+        }
+        
+        // Inicia a aplicação com um pequeno atraso para garantir que todo o JS foi carregado
+        setTimeout(init, 100);
         
         // Atualiza o horário atual
         function updateCurrentTime() {
             const now = new Date();
             const hours = now.getHours().toString().padStart(2, '0');
             const minutes = now.getMinutes().toString().padStart(2, '0');
-            document.getElementById('currentTime').textContent = `${hours}:${minutes}`;
+            const timeElement = document.getElementById('currentTime');
+            if (timeElement) {
+                timeElement.textContent = `${hours}:${minutes}`;
+            }
         }
         
         // Atualiza a contagem de salas ativas
@@ -2562,51 +2964,29 @@
         // Atualiza o horário a cada minuto
         setInterval(updateCurrentTime, 60000);
         
-        // Permite que o usuário use o zoom nativo do navegador em dispositivos móveis
-        mapContainer.addEventListener('touchstart', function(e) {
-            if (e.touches.length === 2) {
-                // Permite zoom com pinça
-                e.stopPropagation();
-            }
-        });
+        // O gerenciamento de toque foi movido para a função setupTouchEvents()
+        // para centralizar toda a lógica de manipulação de toque em um único lugar
         
-        // Reduz a carga de trabalho quando a janela não está em foco
-        document.addEventListener('visibilitychange', function() {
-            const backgroundAnimations = document.getElementById('backgroundAnimations');
-            if (document.hidden) {
-                // Página não está visível, pausa animações
-                backgroundAnimations.style.animationPlayState = 'paused';
-                document.querySelectorAll('.floating-dot, .grid-line, .pulsing-circle, .radar-effect, .glow-area').forEach(el => {
-                    el.style.animationPlayState = 'paused';
-                });
-            } else {
-                // Página visível novamente, retoma animações se estiverem habilitadas
-                if (animationsEnabled) {
-                    backgroundAnimations.style.animationPlayState = 'running';
-                    document.querySelectorAll('.floating-dot, .grid-line, .pulsing-circle, .radar-effect, .glow-area').forEach(el => {
-                        el.style.animationPlayState = 'running';
-                    });
-                }
-            }
-        });
+
         
         // Otimização de performance - limita a taxa de atualização das animações
         let scrollThrottleTimer = 0;
-        window.addEventListener('scroll', function() {
-            const now = Date.now();
-            if (now - scrollThrottleTimer < 50) { // Limita a 20 atualizações por segundo durante rolagem
-                return;
-            }
-            scrollThrottleTimer = now;
-            
-            // Verifica se os elementos estão visíveis antes de animar
-            const backgroundAnimations = document.getElementById('backgroundAnimations');
-            if (!isElementInViewport(backgroundAnimations)) {
-                backgroundAnimations.style.visibility = 'hidden';
-            } else {
-                backgroundAnimations.style.visibility = 'visible';
-            }
-        }, { passive: true });
+        const backgroundAnimations = document.getElementById('backgroundAnimations');
+        
+        if (backgroundAnimations) {
+            window.addEventListener('scroll', function() {
+                const now = Date.now();
+                if (now - scrollThrottleTimer < 50) { // Limita a 20 atualizações por segundo durante rolagem
+                    return;
+                }
+                scrollThrottleTimer = now;
+                
+                // Verifica se os elementos estão visíveis antes de animar
+                if (backgroundAnimations) {
+                    backgroundAnimations.style.visibility = isElementInViewport(backgroundAnimations) ? 'visible' : 'hidden';
+                }
+            }, { passive: true });
+        }
         
         // Limpa o DOM de elementos desnecessários quando o usuário não está interagindo
         let userInactivityTimer;
@@ -2655,44 +3035,28 @@
             );
         }
         
-        // Reduz a carga de trabalho quando a janela não está em foco
-        document.addEventListener('visibilitychange', function() {
-            const backgroundAnimations = document.getElementById('backgroundAnimations');
-            if (document.hidden) {
-                // Página não está visível, pausa animações
-                backgroundAnimations.style.animationPlayState = 'paused';
-                document.querySelectorAll('.floating-dot, .grid-line, .pulsing-circle, .radar-effect, .glow-area').forEach(el => {
-                    el.style.animationPlayState = 'paused';
-                });
-            } else {
-                // Página visível novamente, retoma animações se estiverem habilitadas
-                if (animationsEnabled) {
-                    backgroundAnimations.style.animationPlayState = 'running';
-                    document.querySelectorAll('.floating-dot, .grid-line, .pulsing-circle, .radar-effect, .glow-area').forEach(el => {
-                        el.style.animationPlayState = 'running';
-                    });
-                }
-            }
-        });
+
         
         // Limpa o DOM de elementos desnecessários quando o usuário não está interagindo
         function setupInactivityDetection() {
             clearTimeout(inactivityTimer);
             inactivityTimer = setTimeout(() => {
                 if (!document.hidden && animationsEnabled) {
-                    // Remove metade dos elementos de animação após inatividade
                     const dots = document.querySelectorAll('.floating-dot');
                     const lines = document.querySelectorAll('.grid-line');
                     
+                    // Reduz a opacidade de metade dos elementos de animação após inatividade
                     for (let i = 0; i < dots.length; i += 2) {
-                        if (dots[i] && dots[i].parentNode) {
-                            dots[i].style.opacity = '0.3';
+                        const dot = dots[i];
+                        if (dot && dot.style) {
+                            dot.style.opacity = '0.3';
                         }
                     }
                     
                     for (let i = 0; i < lines.length; i += 2) {
-                        if (lines[i] && lines[i].parentNode) {
-                            lines[i].style.opacity = '0.3';
+                        const line = lines[i];
+                        if (line && line.style) {
+                            line.style.opacity = '0.3';
                         }
                     }
                 }
@@ -2746,17 +3110,38 @@
         
         // Carregar dados iniciais das salas
         async function loadRoomsData() {
-            try {
-                const response = await fetch('/api/rooms');
-                if (response.ok) {
+            console.log('Iniciando carregamento dos dados das salas...');
+            return new Promise(async (resolve, reject) => {
+                try {
+                    console.log('Fazendo requisição para /api/rooms...');
+                    const response = await fetch('/api/rooms');
+                    
+                    if (!response.ok) {
+                        throw new Error(`Erro na resposta da API: ${response.status}`);
+                    }
+                    
                     window.roomsData = await response.json();
                     console.log('Dados das salas carregados:', window.roomsData);
                     
+                    if (!window.roomsData || !Array.isArray(window.roomsData)) {
+                        throw new Error('Dados inválidos recebidos da API');
+                    }
+                    
                     // Atualizar as cores dos círculos com base no status das salas
+                    console.log('Atualizando cores dos círculos...');
                     updateAllCircleColors();
                     
+                    // Atualizar cores dos botões no SVG
+                    console.log('Atualizando cores dos botões no SVG...');
+                    updateAllRoomButtonColors();
+                    
                     // Atualizar interface com os dados carregados
-                    window.roomsData.forEach(room => updateRoomUIElements(room.id));
+                    console.log('Atualizando elementos da interface...');
+                    window.roomsData.forEach(room => {
+                        if (room && room.id) {
+                            updateRoomUIElements(room.id);
+                        }
+                    });
                     
                     // Atualizar o botão de status na barra superior
                     updateStatusButton();
@@ -2764,13 +3149,15 @@
                     // Esconder o indicador de carregamento
                     hideLoadingIndicator();
                     
-                    console.log('Cores dos círculos atualizadas com sucesso');
+                    console.log('Dados das salas processados com sucesso');
+                    resolve();
+                } catch (error) {
+                    console.error('Erro ao carregar dados das salas:', error);
+                    // Esconder o indicador de carregamento mesmo em caso de erro
+                    hideLoadingIndicator();
+                    reject(error);
                 }
-            } catch (error) {
-                console.error('Erro ao carregar dados das salas:', error);
-                // Esconder o indicador de carregamento mesmo em caso de erro
-                hideLoadingIndicator();
-            }
+            });
         }
         
         // Função para esconder o indicador de carregamento
@@ -2793,42 +3180,113 @@
         
         // Função para atualizar as cores de todos os botões das salas no SVG
         function updateAllRoomButtonColors() {
-            // Usar um cache para evitar recalcular os mesmos elementos repetidamente
-            const roomStatusCache = {};
+            console.log('Iniciando updateAllRoomButtonColors...');
             
-            // Preencher o cache com o status atual das salas
-            roomsData.forEach(room => {
-                roomStatusCache[room.id] = room.status;
+            if (!window.roomsData || !Array.isArray(window.roomsData)) {
+                console.warn('roomsData não está definido ou não é um array');
+                return;
+            }
+            
+            // Criar um mapa de status por sala
+            const roomStatusMap = new Map();
+            window.roomsData.forEach(room => {
+                if (room && room.id) {
+                    // Armazenar tanto o ID original quanto a versão com 'sala' prefixada
+                    const roomId = room.id.toString().toLowerCase();
+                    roomStatusMap.set(roomId, room.status || '');
+                    
+                    // Se o ID não começar com 'sala', adicionar uma entrada adicional
+                    if (!roomId.startsWith('sala')) {
+                        roomStatusMap.set('sala' + roomId, room.status || '');
+                    }
+                }
             });
             
-            // Selecionar todos os botões azuis no SVG do mapa
-            const blueButtons = document.querySelectorAll('path[fill="#1E59D9"], path[fill="' + roomColors.inactive + '"]');
+            console.log('Mapa de status das salas:', Object.fromEntries(roomStatusMap));
             
             // Usar requestAnimationFrame para otimizar as atualizações visuais
             requestAnimationFrame(() => {
-                // Para cada botão, verificar se ele pertence a uma sala inativa
-                blueButtons.forEach(button => {
-                    // Tentar encontrar o elemento pai que tem o atributo data-circle
-                    let parent = button.parentElement;
-                    while (parent && !parent.getAttribute('data-circle') && parent !== document.body) {
-                        parent = parent.parentElement;
+                // Selecionar todos os elementos path que representam botões de salas
+                // Incluímos também elementos g para capturar grupos que podem conter os paths
+                const roomButtons = document.querySelectorAll('path[fill="#1E59D9"], path[fill="#FF0000"], g[data-circle]');
+                console.log(`Encontrados ${roomButtons.length} botões/grupos de sala no SVG`);
+                
+                if (roomButtons.length === 0) {
+                    console.warn('Nenhum botão de sala encontrado no SVG');
+                    return;
+                }
+                
+                // Para cada botão/grupo, tentar determinar a sala correspondente
+                roomButtons.forEach((element, index) => {
+                    // Se for um grupo, procurar pelo path filho
+                    const button = element.tagName.toLowerCase() === 'g' ? 
+                        element.querySelector('path') : element;
+                    
+                    if (!button) {
+                        console.warn(`Elemento ${index + 1}: Nenhum path encontrado dentro do grupo`);
+                        return;
                     }
                     
-                    // Se encontrou um pai com data-circle, verificar o status da sala usando o cache
-                    if (parent && parent.getAttribute('data-circle')) {
-                        const roomId = parent.getAttribute('data-circle');
-                        const roomStatus = roomStatusCache[roomId];
-                        
-                        // Se a sala existe e está inativa, mudar a cor do botão para vermelho e adicionar efeito de pulsação
-                        if (roomStatus === 'inativo') {
-                            button.setAttribute('fill', roomColors.inactive);
-                            button.classList.add('inactive-pulse');
-                        } else if (roomStatus === 'ativo') {
-                            button.setAttribute('fill', roomColors.active);
-                            button.classList.remove('inactive-pulse');
+                    // Obter o elemento que contém o identificador da sala
+                    let roomElement = element;
+                    if (element.tagName.toLowerCase() === 'path') {
+                        roomElement = element.closest('g') || element;
+                    }
+                    
+                    // Tentar obter o ID da sala de várias formas
+                    let roomId = null;
+                    const possibleIds = [
+                        roomElement.getAttribute('data-circle'),
+                        roomElement.getAttribute('data-room'),
+                        roomElement.id,
+                        roomElement.closest('[id]')?.id
+                    ];
+                    
+                    // Encontrar o primeiro ID válido
+                    for (const id of possibleIds) {
+                        if (id) {
+                            roomId = id.toLowerCase();
+                            // Remover 'sala' do início se existir para padronização
+                            if (roomId.startsWith('sala')) {
+                                roomId = roomId.substring(4);
+                            }
+                            break;
                         }
                     }
+                    
+                    // Se ainda não encontrou, pular este botão
+                    if (!roomId) {
+                        console.warn(`Botão ${index + 1}: Não foi possível determinar a sala`);
+                        return;
+                    }
+                    
+                    console.log(`Botão ${index + 1}: ID ${roomId}`);
+                    
+                    // Verificar se a sala está inativa
+                    const status = roomStatusMap.get(roomId) || roomStatusMap.get('sala' + roomId) || '';
+                    const isInactive = (
+                        status.toLowerCase() === 'inativo' || 
+                        status.toLowerCase() === 'desativado' ||
+                        status.toLowerCase().includes('inativo') ||
+                        status.toLowerCase().includes('desativado') ||
+                        (status && status.toLowerCase() !== 'ativo')
+                    );
+                    
+                    console.log(`Sala ${roomId} está inativa?`, isInactive);
+                    
+                    // Atualizar a cor do botão com base no status
+                    if (isInactive) {
+                        button.setAttribute('fill', '#FF0000'); // Vermelho para inativo
+                        button.classList.add('inactive-pulse');
+                        console.log(`Definindo cor vermelha para a sala ${roomId}`);
+                    } else {
+                        button.setAttribute('fill', '#1E59D9'); // Azul para ativo
+                        button.classList.remove('inactive-pulse');
+                        console.log(`Definindo cor azul para a sala ${roomId}`);
+                    }
                 });
+                
+                console.log('Atualização de cores dos botões concluída');
             });
         }
         
@@ -3305,25 +3763,367 @@
             return roomItem;
         }
     </script>
-    <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Button click tracking
-        document.addEventListener('DOMContentLoaded', function() {
-            // Track clicks on circle buttons
-            document.addEventListener('click', function(event) {
-                const circleButton = event.target.closest('.circle-button');
-                if (circleButton) {
-                    const buttonNumber = circleButton.getAttribute('data-circle');
-                    console.log(`Button ${buttonNumber} clicked`);
+        // Função para carregar configurações dos botões do menu (global)
+        window.loadMenuButtonsConfig = function() {
+            // Configuração padrão dos botões do menu
+            const menuButtons = [
+                { id: 'programacaoBtn', text: 'Ver Programação Completa' },
+                { id: 'fotosBtn', text: 'Imagens', icon: 'fa-images' },
+                { id: 'voltarBtn', text: 'Voltar' }
+            ];
+            
+            const menuItems = document.querySelector('.menu-items');
+            if (menuItems) {
+                menuItems.innerHTML = ''; // Limpa itens existentes
+                
+                menuButtons.forEach(button => {
+                    const buttonElement = document.createElement('button');
+                    buttonElement.id = button.id;
+                    buttonElement.className = 'menu-btn';
                     
-                    // Here you can add your tracking code, for example:
-                    // trackButtonClick(buttonNumber);
-                    // Or send to analytics:
-                    // gtag('event', 'button_click', { 'button_number': buttonNumber });
+                    if (button.icon) {
+                        const icon = document.createElement('i');
+                        icon.className = `fas ${button.icon}`;
+                        icon.style.marginRight = '10px';
+                        buttonElement.appendChild(icon);
+                    }
+                    
+                    buttonElement.appendChild(document.createTextNode(button.text));
+                    menuItems.appendChild(buttonElement);
+                });
+            }
+            
+            // Adiciona event listeners após criar os botões
+            const programacaoBtn = document.getElementById('programacaoBtn');
+            const fotosBtn = document.getElementById('fotosBtn');
+            const voltarBtn = document.getElementById('voltarBtn');
+            
+            if (programacaoBtn) {
+                programacaoBtn.addEventListener('click', function() {
+                    // Lógica para programação
+                    console.log('Programação clicada');
+                });
+            }
+            
+            if (fotosBtn) {
+                fotosBtn.addEventListener('click', function() {
+                    // Lógica para fotos
+                    console.log('Fotos clicadas');
+                });
+            }
+            
+            if (voltarBtn) {
+                voltarBtn.addEventListener('click', function() {
+                    // Lógica para voltar
+                    console.log('Voltar clicado');
+                    history.back();
+                });
+            }
+        };
+        
+        // Gerenciamento do menu hambúrguer
+        document.addEventListener('DOMContentLoaded', function() {
+            const hamburgerMenu = document.querySelector('.hamburger-menu');
+            const hamburgerIcon = document.querySelector('.hamburger-icon');
+            
+            // Carregar configurações dos botões do menu
+            if (typeof window.loadMenuButtonsConfig === 'function') {
+                window.loadMenuButtonsConfig();
+            }
+            
+            // Alternar menu
+            hamburgerIcon.addEventListener('click', function(e) {
+                e.stopPropagation();
+                hamburgerMenu.classList.toggle('active');
+                hamburgerIcon.classList.toggle('active');
+            });
+            
+            // Fechar menu ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!hamburgerMenu.contains(e.target)) {
+                    hamburgerMenu.classList.remove('active');
+                    hamburgerIcon.classList.remove('active');
+                }
+            });
+            
+            // Função para fechar o menu
+            window.closeMenu = function() {
+                hamburgerMenu.classList.remove('active');
+                hamburgerIcon.classList.remove('active');
+            }
+
+            // Habilitando rolagem em dispositivos móveis
+            document.body.style.overflow = 'auto';
+            document.body.style.height = 'auto';
+            document.body.style.webkitOverflowScrolling = 'touch';
+            
+            // Garantir que o conteúdo seja maior que a tela para permitir rolagem
+            const content = document.querySelector('.map-wrapper');
+            if (content) {
+                content.style.minHeight = (window.innerHeight + 1) + 'px';
+            }
+        });
+    </script>
+    
+    <!-- Modal de Aviso para Salas Desativadas -->
+            </svg>
+            
+            <!-- Modal de Aviso -->
+            <div id="warningModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-modal">&times;</span>
+                    <h3>Atenção</h3>
+                    <p>Esta sala está atualmente desativada e não está disponível para visualização.</p>
+                    <button class="btn-close">Entendi</button>
+                </div>
+            </div>
+            
+            <script>
+                // Função para mostrar o modal de aviso
+                function showWarningModal() {
+                    const modal = document.createElement('div');
+                    modal.id = 'warningModal';
+                    modal.className = 'modal';
+                    modal.style.display = 'flex';
+                    modal.style.position = 'fixed';
+                    modal.style.top = '0';
+                    modal.style.left = '0';
+                    modal.style.width = '100%';
+                    modal.style.height = '100%';
+                    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                    modal.style.justifyContent = 'center';
+                    modal.style.alignItems = 'center';
+                    modal.style.zIndex = '1000';
+                    
+                    const modalContent = document.createElement('div');
+                    modalContent.className = 'modal-content';
+                    modalContent.style.backgroundColor = '#1a1a1a';
+                    modalContent.style.padding = '20px';
+                    modalContent.style.borderRadius = '10px';
+                    modalContent.style.maxWidth = '80%';
+                    modalContent.style.textAlign = 'center';
+                    modalContent.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
+                    
+                    const warningText = document.createElement('h3');
+                    warningText.textContent = 'Aviso';
+                    warningText.style.color = '#ff4d4d';
+                    warningText.style.marginBottom = '15px';
+                    
+                    const message = document.createElement('p');
+                    message.textContent = 'Esta sala está desativada no momento.';
+                    message.style.color = '#e0e0e0';
+                    message.style.marginBottom = '20px';
+                    
+                    const closeButton = document.createElement('button');
+                    closeButton.textContent = 'Fechar';
+                    closeButton.style.padding = '8px 20px';
+                    closeButton.style.backgroundColor = '#ff4d4d';
+                    closeButton.style.color = 'white';
+                    closeButton.style.border = 'none';
+                    closeButton.style.borderRadius = '5px';
+                    closeButton.style.cursor = 'pointer';
+                    closeButton.style.transition = 'background-color 0.3s';
+                    
+                    closeButton.onmouseover = function() {
+                        this.style.backgroundColor = '#ff6666';
+                    };
+                    
+                    closeButton.onmouseout = function() {
+                        this.style.backgroundColor = '#ff4d4d';
+                    };
+                    
+                    closeButton.onclick = function() {
+                        document.body.removeChild(modal);
+                    };
+                    
+                    modalContent.appendChild(warningText);
+                    modalContent.appendChild(message);
+                    modalContent.appendChild(closeButton);
+                    modal.appendChild(modalContent);
+                    document.body.appendChild(modal);
+                    
+                    // Fechar ao clicar fora do conteúdo
+                    modal.onclick = function(event) {
+                        if (event.target === modal) {
+                            document.body.removeChild(modal);
+                        }
+                    };
+                };
+            </script>
+        </div> <!-- Fechando .map-wrapper -->
+    </div> <!-- Fechando .map-container -->
+    
+    <!-- Espaço extra para rolagem -->
+    <div style="height: 50px; width: 100%;"></div>
+    
+
+
+    <script>
+        // Variável para controle de arrasto e zoom
+        let arrastando = false;
+        let isZoomed = false;
+        
+        // Função para alternar o zoom do mapa
+        function toggleZoom(event) {
+            const svg = document.getElementById('map-svg');
+            
+            // Se já estiver com zoom, volta ao normal
+            if (isZoomed) {
+                svg.style.transform = 'scale(1)';
+                svg.style.transformOrigin = 'center';
+            } 
+            // Se não estiver com zoom, aplica o zoom no local clicado
+            else {
+                // Obtém a posição do clique em relação ao SVG
+                const rect = svg.getBoundingClientRect();
+                const x = (event.clientX - rect.left) / rect.width;
+                const y = (event.clientY - rect.top) / rect.height;
+                
+                // Ajusta a origem da transformação para o local do clique
+                const originX = x * 100 + '%';
+                const originY = y * 100 + '%';
+                
+                // Aplica o zoom com transição suave
+                svg.style.transformOrigin = `${originX} ${originY}`;
+                svg.style.transform = 'scale(1.5)';
+            }
+            
+            isZoomed = !isZoomed;
+        }
+        
+        // Adiciona o evento de duplo clique ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            const svg = document.getElementById('map-svg');
+            
+            // Configura a transição suave para o zoom
+            svg.style.transition = 'transform 0.3s ease-out';
+            
+            // Adiciona o evento de duplo clique
+            svg.addEventListener('dblclick', function(event) {
+                event.preventDefault();
+                toggleZoom(event);
+            });
+            
+            // Permite sair do zoom clicando fora do mapa
+            document.addEventListener('click', function(event) {
+                if (isZoomed && !svg.contains(event.target)) {
+                    toggleZoom(event);
                 }
             });
         });
+        
+        // Adiciona eventos de clique a todos os botões circulares
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.circle-button').forEach(botao => {
+                botao.addEventListener('click', function() {
+                    const numeroSala = this.getAttribute('data-circle');
+                    console.log(`Botão da sala ${numeroSala} clicado`);
+                    
+                    // Você pode adicionar mais funcionalidades aqui quando um círculo for clicado
+                    // Por exemplo, mostrar detalhes da sala, destacar a sala, etc.
+                });
+
+                // Removendo efeito de hover dos botões
+
+                // Torna os círculos arrastáveis
+                let arrastando = false;
+                let deslocamentoX, deslocamentoY;
+                let toqueInicioX, toqueInicioY, posicaoInicialX, posicaoInicialY;
+
+                // Eventos de mouse
+                botao.addEventListener('mousedown', function(e) {
+                    if (e.button !== 0) return; // Apenas botão esquerdo do mouse
+                    arrastando = true;
+                    const retangulo = this.getBoundingClientRect();
+                    deslocamentoX = e.clientX - retangulo.left;
+                    deslocamentoY = e.clientY - retangulo.top;
+                    this.style.cursor = 'grabbing';
+                    e.stopPropagation();
+                });
+
+                // Eventos de toque
+                botao.addEventListener('touchstart', function(e) {
+                    const toque = e.touches[0];
+                    const retangulo = this.getBoundingClientRect();
+                    toqueInicioX = toque.clientX;
+                    toqueInicioY = toque.clientY;
+                    posicaoInicialX = retangulo.left;
+                    posicaoInicialY = retangulo.top;
+                    this.style.transition = 'none';
+                    e.stopPropagation();
+                }, { passive: true });
+            });
+
+            // Movimento do mouse
+            document.addEventListener('mousemove', function(e) {
+                if (!arrastando) return;
+                
+                const botaoAtivo = document.querySelector('.circle-button:active');
+                if (botaoAtivo) {
+                    const container = botaoAtivo.parentElement;
+                    const retanguloContainer = container.getBoundingClientRect();
+                    
+                    let x = e.clientX - retanguloContainer.left - deslocamentoX;
+                    let y = e.clientY - retanguloContainer.top - deslocamentoY;
+                    
+                    // Mantém o botão dentro dos limites do container
+                    const retanguloBotao = botaoAtivo.getBoundingClientRect();
+                    x = Math.max(0, Math.min(x, retanguloContainer.width - retanguloBotao.width));
+                    y = Math.max(0, Math.min(y, retanguloContainer.height - retanguloBotao.height));
+                    
+                    botaoAtivo.style.position = 'absolute';
+                    botaoAtivo.style.left = `${x}px`;
+                    botaoAtivo.style.top = `${y}px`;
+                }
+            });
+
+            // Movimento de toque
+            document.addEventListener('touchmove', function(e) {
+                const botaoAtivo = document.querySelector('.circle-button:active');
+                if (!botaoAtivo) return;
+                
+                const toque = e.touches[0];
+                const deslocamentoX = toque.clientX - toqueInicioX;
+                const deslocamentoY = toque.clientY - toqueInicioY;
+                
+                const container = botaoAtivo.parentElement;
+                const retanguloContainer = container.getBoundingClientRect();
+                
+                let novoX = posicaoInicialX + deslocamentoX - retanguloContainer.left;
+                let novoY = posicaoInicialY + deslocamentoY - retanguloContainer.top;
+                
+                // Mantém o botão dentro dos limites do container
+                const retanguloBotao = botaoAtivo.getBoundingClientRect();
+                novoX = Math.max(0, Math.min(novoX, retanguloContainer.width - retanguloBotao.width));
+                novoY = Math.max(0, Math.min(novoY, retanguloContainer.height - retanguloBotao.height));
+                
+                botaoAtivo.style.position = 'absolute';
+                botaoAtivo.style.left = `${novoX}px`;
+                botaoAtivo.style.top = `${novoY}px`;
+                
+                e.preventDefault(); // Impede a rolagem da página ao arrastar
+            }, { passive: false });
+
+            // Finalização do arrasto
+            document.addEventListener('mouseup', function() {
+                arrastando = false;
+                document.querySelectorAll('.circle-button').forEach(botao => {
+                    botao.style.cursor = 'pointer';
+                });
+            });
+
+            document.addEventListener('touchend', function() {
+                document.querySelectorAll('.circle-button').forEach(botao => {
+                    botao.style.transition = 'transform 0.2s ease';
+                });
+            }, { passive: true });
+
+            console.log('Script dos botões circulares carregado com sucesso');
+        });
     </script>
-    <script src="script.js"></script>
+    
+    <!-- Script para correção do botão personalizado -->
+    <script src="assets/js/button-fix.js"></script>
 </body>
 </html>

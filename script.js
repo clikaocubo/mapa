@@ -1,702 +1,368 @@
-// Dados iniciais das salas
-window.rooms = window.rooms || [];
-let selectedRoom = null;
-let realTimeUpdates = [];
-let unreadCount = 0;
+// Inicializa os dados das salas
+window.roomsData = [];
 
-// Estados disponíveis para as salas
-const ROOM_STATUS = {
-    AVAILABLE: 'Livre',
-    OCCUPIED: 'Ocupada',
-    MAINTENANCE: 'Manutenção',
-    RESERVED: 'Reservada'
+// Configuração dos botões
+let helpButtonConfig = {
+    url: '#',
+    enabled: true,
+    text: 'Ajuda',
+    target: '_blank'
 };
 
-// Cores para os diferentes status
-const STATUS_COLORS = {
-    [ROOM_STATUS.AVAILABLE]: '#4CAF50',
-    [ROOM_STATUS.OCCUPIED]: '#f44336',
-    [ROOM_STATUS.MAINTENANCE]: '#FFA500',
-    [ROOM_STATUS.RESERVED]: '#2196F3'
+let mapButtonConfig = {
+    enabled: true,
+    title: 'Título do Mapa',
+    message: 'Mensagem personalizada do mapa',
+    image: 'assets/images/mapa.jpg',
+    buttonText: 'Fechar'
 };
 
-// Opções de status disponíveis
-const AVAILABLE_STATUSES = Object.values(ROOM_STATUS);
+let centerButtonConfig = {
+    url: '#',
+    enabled: true,
+    text: '+',
+    target: '_self'
+};
 
-// Inicializa o sistema quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Sistema de gerenciamento de salas inicializado');
-    
-    // Inicializa o mapa de salas
-    initRoomMap();
-    
-    // Configura o Socket.IO para atualizações em tempo real
-    setupSocketListeners();
-});
-
-// Inicializa o mapa de salas
-function initRoomMap() {
-    const mapGrid = document.querySelector('.map-grid');
-
-    if (!mapGrid) {
-        // console.warn('Elemento ".map-grid" não encontrado. Ignorando initRoomMap().');
-        return;
-    }
-    // Limpa o grid
-    mapGrid.innerHTML = '';
-    
-    // Adiciona os botões das salas
-    rooms.forEach(room => {
-        const button = document.createElement('button');
-        button.className = `room-button ${room.status === 'Ocupada' ? 'occupied' : ''}`;
-        button.innerHTML = `
-            <span class="room-name">${room.name}</span>
-            <span class="room-status">${room.status}</span>
-        `;
-        
-        button.addEventListener('click', () => selectRoom(room.id));
-        mapGrid.appendChild(button);
-    });
-}
-
-// Seleciona uma sala para visualizar/editar
-function selectRoom(roomId) {
-    selectedRoom = rooms.find(r => r.id === roomId);
-    updateRoomInfo(selectedRoom);
-    
-    // Atualiza a classe ativa nos botões
-    document.querySelectorAll('.room-button').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    const selectedBtn = document.querySelector(`.room-button:nth-child(${roomId})`);
-    if (selectedBtn) {
-        selectedBtn.classList.add('active');
-    }
-}
-
-// Atualiza as informações da sala selecionada
-function updateRoomInfo(room) {
-    const roomInfo = document.getElementById('roomInfo');
-    
-    if (!room) {
-        roomInfo.innerHTML = '<p>Nenhuma sala selecionada</p>';
-        return;
-    }
-    
-    roomInfo.innerHTML = `
-        <h3>${room.name}</h3>
-        <p><strong>Status:</strong> ${room.status}</p>
-        <p><strong>Capacidade:</strong> ${room.capacity} pessoas</p>
-        <p><strong>Descrição:</strong> ${room.description}</p>
-        
-        <div class="room-actions">
-            <button class="btn-edit" onclick="editRoom(${room.id})">
-                Editar Status
-            </button>
-        </div>
-    `;
-}
-
-// Função para editar o status da sala
-function editRoom(roomId) {
-    const room = rooms.find(r => r.id === roomId);
-    if (!room) return;
-    
-    const newStatus = prompt('Novo status da sala (Livre, Ocupada, Manutenção):', room.status);
-    
-    if (newStatus && newStatus !== room.status) {
-        // Atualiza o status da sala
-        room.status = newStatus;
-        
-        // Atualiza a interface
-        updateRoomInfo(room);
-        
-        // Atualiza o botão da sala
-        const roomButton = document.querySelector(`.room-button:nth-child(${roomId})`);
-        if (roomButton) {
-            roomButton.classList.remove('occupied', 'active');
-            if (newStatus === 'Ocupada') {
-                roomButton.classList.add('occupied');
-            }
-            
-            // Atualiza o texto do status
-            const statusElement = roomButton.querySelector('.room-status');
-            if (statusElement) {
-                statusElement.textContent = newStatus;
-            }
-        }
-        
-        // Aqui você pode adicionar o código para enviar a atualização para o servidor
-        console.log(`Status da sala ${room.name} atualizado para: ${newStatus}`);
-    }
-}
-
-// Configura os listeners do Socket.IO
-function setupSocketListeners() {
-    // Exemplo de como configurar atualizações em tempo real
-    // Substitua pelo seu código real de Socket.IO
-    console.log('Configurando listeners do Socket.IO...');
-    
-    // Exemplo de como receber atualizações
-    // socket.on('roomUpdated', (updatedRoom) => {
-    //     const index = rooms.findIndex(r => r.id === updatedRoom.id);
-    //     if (index !== -1) {
-    //         rooms[index] = { ...rooms[index], ...updatedRoom };
-    //         if (selectedRoom && selectedRoom.id === updatedRoom.id) {
-    //             updateRoomInfo(rooms[index]);
-    //         }
-    //     }
-    // });
-}
-
-// Torna as funções disponíveis globalmente
-window.selectRoom = selectRoom;
-window.editRoom = editRoom;
-
-// Inicializa o sistema quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Sistema de gerenciamento de salas inicializado');
-    
-    // Inicializa o mapa de salas
-    initRoomMap();
-    
-    // Configura o Socket.IO para atualizações em tempo real
-    setupSocketListeners();
-});
-
-// Função para criar o modal de notificações
-function createNotificationModal() {
-        const modalHTML = `
-            <div id="notificationModal" class="notification-modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3>Atualizações em Tempo Real</h3>
-                        <span class="close-modal">&times;</span>
-                    </div>
-                    <div class="modal-body" id="updatesContainer">
-                        <p class="no-updates">Nenhuma atualização recente.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button id="closeModalBtn" class="btn-close">Fechar</button>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-overlay" id="modalOverlay"></div>`;
-
-        // Adiciona o modal ao corpo do documento
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
-        // Configura os event listeners do modal
-        setupModalListeners();
-    }
-    
-    // Função para configurar os listeners do modal
-    function setupModalListeners() {
-        const modal = document.getElementById('notificationModal');
-        const closeBtn = document.querySelector('.close-modal');
-        const closeBtnFooter = document.getElementById('closeModalBtn');
-        const overlay = document.getElementById('modalOverlay');
-        
-        if (!modal || !closeBtn || !closeBtnFooter || !overlay) return;
-        
-        // Fechar modal ao clicar no botão de fechar
-        closeBtn.addEventListener('click', toggleNotificationModal);
-        closeBtnFooter.addEventListener('click', toggleNotificationModal);
-        
-        // Fechar modal ao clicar no overlay
-        overlay.addEventListener('click', toggleNotificationModal);
-        
-        // Fechar modal ao pressionar ESC
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && modal.classList.contains('show')) {
-                toggleNotificationModal();
-            }
-        });
-    }
-    
-    // Função para tocar som de notificação
-    function playNotificationSound() {
-        try {
-            if (!notificationSound) {
-                notificationSound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU' + 
-                    '=='); // Short beep sound
-                notificationSound.volume = 0.3;
-            }
-            notificationSound.currentTime = 0;
-            notificationSound.play().catch(e => console.warn('Não foi possível reproduzir som:', e));
-        } catch (e) {
-            console.warn('Erro ao reproduzir som:', e);
-        }
-    }
-
-    // Função para adicionar uma nova atualização
-    function addUpdate(message, type = 'info') {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString();
-        const isModalOpen = document.querySelector('.notification-modal.show') !== null;
-        
-        const newNotification = {
-            id: Date.now(),
-            time: timeString,
-            message: message,
-            type: type,
-            read: isModalOpen,
-            timestamp: now.getTime()
-        };
-        
-        realTimeUpdates.unshift(newNotification);
-        
-        // Limita o histórico a 50 itens
-        if (realTimeUpdates.length > 50) {
-            realTimeUpdates = realTimeUpdates.slice(0, 50);
-        }
-        
-        // Atualiza o contador de não lidas se o modal não estiver aberto
-        if (!isModalOpen) {
-            unreadCount++;
-            updateUnreadBadge();
-            playNotificationSound(); // Toca o som apenas para notificações não lidas
-        }
-        
-        updateUpdatesList();
-        
-        // Dispara evento personalizado para notificar sobre a nova atualização
-        document.dispatchEvent(new CustomEvent('notificationAdded', { 
-            detail: newNotification 
-        }));
-        
-        return newNotification.id;
-    }
-    
-    // Função para marcar notificação como lida
-    function markAsRead(notificationId) {
-        const notification = realTimeUpdates.find(n => n.id === notificationId);
-        if (notification && !notification.read) {
-            notification.read = true;
-            unreadCount = Math.max(0, unreadCount - 1);
-            updateUnreadBadge();
-            return true;
-        }
-        return false;
-    }
-
-    // Função para marcar todas as notificações como lidas
-    function markAllAsRead() {
-        let hasUnread = false;
-        realTimeUpdates.forEach(update => {
-            if (!update.read) {
-                update.read = true;
-                hasUnread = true;
-            }
-        });
-        
-        if (hasUnread) {
-            unreadCount = 0;
-            updateUnreadBadge();
-            updateUpdatesList();
-        }
-        
-        return hasUnread;
-    }
-
-    // Função para atualizar a lista de atualizações na interface
-    function updateUpdatesList() {
-        const updatesList = document.getElementById('updatesContainer');
-        if (!updatesList) return;
-        
-        if (realTimeUpdates.length === 0) {
-            updatesList.innerHTML = '<p class="no-updates">Nenhuma atualização recente</p>';
-            return;
-        }
-        
-        updatesList.innerHTML = realTimeUpdates.map(update => {
-            const itemClass = `update-item ${update.type} ${update.read ? '' : 'unread'}`;
-            return `
-                <div class="${itemClass}" data-id="${update.id}">
-                    <div class="update-icon">
-                        ${getNotificationIcon(update.type)}
-                    </div>
-                    <div class="update-content">
-                        <span class="update-time">${update.time}</span>
-                        <p class="update-message">${update.message}</p>
-                    </div>
-                </div>
-            `;
-        }).join('');
-        
-        // Adiciona listeners para marcar como lido ao clicar
-        document.querySelectorAll('.update-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const notificationId = parseInt(this.getAttribute('data-id'));
-                if (markAsRead(notificationId)) {
-                    this.classList.remove('unread');
-                }
-            });
-        });
-    }
-    
-    // Função auxiliar para obter o ícone da notificação
-    function getNotificationIcon(type) {
-        const icons = {
-            'info': 'ℹ️',
-            'success': '✅',
-            'warning': '⚠️',
-            'error': '❌'
-        };
-        return icons[type] || icons['info'];
-    }
-    
-    // Função para atualizar o contador de não lidas no badge
-    function updateUnreadBadge() {
-        const badge = document.querySelector('.notification-badge');
-        if (!badge) return;
-        
-        if (unreadCount > 0) {
-            badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-            badge.style.display = 'flex';
-            
-            // Adiciona animação de pulso ao botão
-            notificationButton.style.animation = 'pulse 0.5s';
-            setTimeout(() => {
-                notificationButton.style.animation = '';
-            }, 500);
-        } else {
-            badge.style.display = 'none';
-        }
-    }
-    
-    // Atualiza a lista de notificações no modal
-    function updateNotificationList() {
-        const modalBody = document.querySelector('.modal-body');
-        if (!modalBody) return;
-        
-        if (realTimeUpdates.length === 0) {
-            modalBody.innerHTML = '<p class="no-updates">Nenhuma atualização recente</p>';
-            return;
-        }
-        
-        const updatesHtml = realTimeUpdates.map((update, index) => {
-            const itemClass = update.read ? 'update-item' : 'update-item unread';
-            return `
-                <div class="${itemClass}" data-index="${index}">
-                    <span class="update-time">${update.time}</span>
-                    <p class="update-message">${update.message}</p>
-                </div>
-            `;
-        }).join('');
-        
-        modalBody.innerHTML = updatesHtml;
-    }
-    
-// Função para alternar a visibilidade do modal
-function toggleNotificationModal() {
-    const modal = document.getElementById('notificationModal');
-    const overlay = document.getElementById('modalOverlay');
-    const body = document.body;
-    
-    if (!modal || !overlay) {
-        createNotificationModal();
-        return;
-    }
-    
-    const isOpening = !modal.classList.contains('show');
-    
-    if (isOpening) {
-        // Mostrar modal
-        modal.classList.add('show');
-        overlay.classList.add('show');
-        body.style.overflow = 'hidden';
-        
-        // Marcar todas como lidas ao abrir
-        markAllAsRead();
-        
-        // Disparar evento personalizado
-        document.dispatchEvent(new CustomEvent('notificationModalOpened'));
-    } else {
-        // Esconder modal
-        modal.classList.remove('show');
-        overlay.classList.remove('show');
-        body.style.overflow = '';
-        
-        // Disparar evento personalizado
-        document.dispatchEvent(new CustomEvent('notificationModalClosed'));
-    }
-}
-
-// Configura os botões do modal
-function setupModalButtons() {
+// Função para carregar os dados das salas do servidor
+async function loadRoomsData() {
     try {
-        const modalFooter = document.querySelector('.modal-footer');
-        if (!modalFooter) return;
+        console.log('Carregando dados das salas...');
+        const response = await fetch('/api/rooms');
+        if (!response.ok) {
+            throw new Error(`Erro ao carregar dados: ${response.status}`);
+        }
+        const rooms = await response.json();
+        console.log('Dados das salas carregados:', rooms);
         
-        // Limpar botões existentes
-        modalFooter.innerHTML = '';
+        // Atualiza os dados das salas
+        window.roomsData = Array.isArray(rooms) ? rooms : [];
+        console.log('Dados das salas atualizados:', window.roomsData);
         
-        // Botão para marcar todas como lidas
-        const markReadBtn = document.createElement('button');
-        markReadBtn.className = 'btn-mark-read';
-        markReadBtn.textContent = 'Marcar todas como lidas';
-        markReadBtn.addEventListener('click', markAllAsRead);
+        // Atualiza a interface do usuário
+        if (typeof updateAllCircleColors === 'function') {
+            updateAllCircleColors();
+        }
         
-        // Botão para limpar notificações
-        const clearButton = document.createElement('button');
-        clearButton.className = 'btn-clear';
-        clearButton.textContent = 'Limpar todas';
-        clearButton.addEventListener('click', () => {
-            if (confirm('Tem certeza que deseja limpar todas as notificações?')) {
-                realTimeUpdates = [];
-                unreadCount = 0;
-                updateUnreadBadge();
-                updateNotificationList();
-                document.dispatchEvent(new CustomEvent('notificationsCleared'));
-            }
-        });
-        
-        // Adicionar botões ao rodapé
-        modalFooter.appendChild(markReadBtn);
-        modalFooter.appendChild(clearButton);
-        
-        // Configurar fechamento do modal ao clicar fora
-        const handleClickOutside = (e) => {
-            const modal = document.getElementById('notificationModal');
-            const button = document.getElementById('notificationButton');
-            
-            if (modal?.classList.contains('show') && 
-                !modal.contains(e.target) && 
-                !button?.contains(e.target)) {
-                toggleNotificationModal();
-            }
-        };
-        
-        // Configurar fechamento do modal com a tecla ESC
-        const handleKeyDown = (e) => {
-            const modal = document.getElementById('notificationModal');
-            if (e.key === 'Escape' && modal?.classList.contains('show')) {
-                toggleNotificationModal();
-            }
-        };
-        
-        // Adicionar listeners de eventos
-        document.addEventListener('click', handleClickOutside);
-        document.addEventListener('keydown', handleKeyDown);
-        
-        // Retornar função de limpeza
-        return () => {
-            document.removeEventListener('click', handleClickOutside);
-            document.removeEventListener('keydown', handleKeyDown);
-        };
+        return window.roomsData;
     } catch (error) {
-        console.error('Erro ao configurar botões do modal:', error);
+        console.error('Erro ao carregar dados das salas:', error);
+        window.roomsData = [];
+        return [];
     }
 }
 
-// Function to play notification sound
-function playNotificationSound() {
+// Carrega as configurações dos botões
+async function loadButtonConfigs() {
     try {
-        const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU' + 'A'.repeat(1000));
-        audio.volume = 0.3;
-        audio.play().catch(e => console.warn('Error playing sound:', e));
-    } catch (e) {
-        console.warn('Error playing notification sound:', e);
-    }
-}
-
-// Setup socket listeners
-function setupSocketListeners() {
-    const socket = window.socketManager ? window.socketManager.getSocket() : window.socket;
-    
-    if (!socket) {
-        console.warn('Socket not available for setting up listeners');
-        setTimeout(setupSocketListeners, 1000);
-        return;
-    }
-    
-    console.log('Setting up socket listeners...');
-    
-    // Room updated event
-    socket.on('roomUpdated', (room) => {
-        console.log('Room updated event received:', room);
-        if (room?.name) {
-            addUpdate(`Room ${room.name} has been updated`, 'info');
-        }
-    });
-    
-    // New reservation event
-    socket.on('newReservation', (data) => {
-        console.log('New reservation:', data);
-        if (data?.room) {
-            addUpdate(`New reservation for room ${data.room}`, 'success');
-        }
-    });
-    
-    // Reservation cancelled event
-    socket.on('reservationCancelled', (data) => {
-        console.log('Reservation cancelled:', data);
-        if (data?.room) {
-            addUpdate(`Reservation cancelled for room ${data.room}`, 'warning');
-        }
-    });
-}
-
-// Setup modal buttons
-function setupModalButtons() {
-    const modalFooter = document.querySelector('.modal-footer');
-    if (!modalFooter) return;
-    
-    // Clear existing buttons
-    modalFooter.innerHTML = '';
-    
-    // Mark all as read button
-    const markReadBtn = document.createElement('button');
-    markReadBtn.className = 'btn-mark-read';
-    markReadBtn.textContent = 'Mark all as read';
-    markReadBtn.addEventListener('click', markAllAsRead);
-    
-    // Clear notifications button
-    const clearButton = document.createElement('button');
-    clearButton.className = 'btn-clear';
-    clearButton.textContent = 'Clear all';
-    clearButton.addEventListener('click', () => {
-        if (confirm('Are you sure you want to clear all notifications?')) {
-            realTimeUpdates = [];
-            unreadCount = 0;
-            updateUnreadBadge();
-            updateNotificationList();
-            document.dispatchEvent(new CustomEvent('notificationsCleared'));
-        }
-    });
-    
-    // Add buttons to footer
-    modalFooter.appendChild(markReadBtn);
-    modalFooter.appendChild(clearButton);
-}
-
-// Inicializa o sistema de notificações
-function initNotificationSystem() {
-    // Cria o modal de notificações se não existir
-    if (!document.getElementById('notificationModal')) {
-        createNotificationModal();
-    }
-    
-    // Configura os botões do modal
-    setupModalButtons();
-    
-    // Configura os listeners do modal
-    setupModalListeners();
-    
-    // Adiciona um listener para o botão de notificação
-    const notificationButton = document.getElementById('notificationButton');
-    if (notificationButton) {
-        notificationButton.addEventListener('click', toggleNotificationModal);
-    }
-}
-
-// Configura os listeners do Socket.IO
-function setupSocketListeners() {
-    // Verifica se o gerenciador de socket está disponível
-    if (!window.socketManager) {
-        console.warn('Socket manager não disponível');
-        return;
-    }
-    
-    const socket = window.socketManager.getSocket();
-    if (!socket) {
-        console.warn('Socket não disponível');
-        return;
-    }
-    
-    // Escuta por atualizações de sala
-    socket.on('roomUpdated', (roomData) => {
-        console.log('Sala atualizada:', roomData);
-        // Atualiza a sala na interface
-        const room = rooms.find(r => r.id === roomData.id);
-        if (room) {
-            Object.assign(room, roomData);
-            // Se esta for a sala selecionada, atualiza suas informações
-            if (selectedRoom && selectedRoom.id === roomData.id) {
-                updateRoomInfo(room);
-            }
-            // Atualiza o botão da sala
-            updateRoomButton(room);
-            
-            // Adiciona uma notificação
-            addUpdate(`Sala ${room.name} atualizada: ${room.status}`, 'info');
-        }
-    });
-    
-    // Outros listeners do socket podem ser adicionados aqui
-}
-
-// Atualiza o botão de uma sala na interface
-function updateRoomButton(room) {
-    const button = document.querySelector(`.room-button[data-room-id="${room.id}"]`);
-    if (button) {
-        // Atualiza as classes do botão com base no status
-        button.className = `room-button ${room.status === 'Ocupada' ? 'occupied' : ''}`;
+        console.log('Iniciando carregamento do config.json...');
+        const response = await fetch('config.json?t=' + new Date().getTime()); // Adiciona timestamp para evitar cache
         
-        // Atualiza o texto do status
-        const statusElement = button.querySelector('.room-status');
-        if (statusElement) {
-            statusElement.textContent = room.status;
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Erro na resposta do config.json:', response.status, errorText);
+            throw new Error('Erro ao carregar configurações: ' + response.status);
         }
-    }
-}
-
-// Socket Manager to handle socket connection
-class SocketManager {
-    constructor() {
-        this.socket = null;
-        this.initializeSocket();
-    }
-
-    initializeSocket() {
-        try {
-            if (window.io) {
-                this.socket = io({
-                    reconnection: true,
-                    reconnectionAttempts: 5,
-                    reconnectionDelay: 1000,
-                    timeout: 20000
-                });
-
-                this.socket.on('connect', () => {
-                    console.log('Socket connected');
-                    if (typeof loadRoomsData === 'function') {
-                        loadRoomsData();
-                    }
-                });
-
-                this.socket.on('disconnect', () => {
-                    console.log('Socket disconnected');
-                });
-
-                this.socket.on('connect_error', (error) => {
-                    console.error('Socket connection error:', error);
-                    setTimeout(() => this.socket.connect(), 5000);
-                });
-
-                window.socket = this.socket;
+        
+        const config = await response.json().catch(error => {
+            console.error('Erro ao fazer parse do JSON:', error);
+            throw new Error('Erro ao processar o arquivo de configuração');
+        });
+        
+        console.log('Configurações carregadas com sucesso:', config);
+        
+        // Força a configuração do centerButton se não existir
+        if (!config.centerButton) {
+            console.warn('A configuração centerButton não foi encontrada no config.json. Usando valores padrão.');
+            config.centerButton = {
+                url: 'https://www.mercadolivre.com.br',
+                enabled: true,
+                text: '+',
+                target: '_blank'
+            };
+        } else {
+            console.log('Configuração do centerButton encontrada:', config.centerButton);
+            
+            // Garante que a URL esteja correta
+            if (config.centerButton.url === '#' || !config.centerButton.url) {
+                console.warn('URL inválida no centerButton, usando URL padrão');
+                config.centerButton.url = 'https://www.mercadolivre.com.br';
             }
-        } catch (error) {
-            console.error('Error initializing socket:', error);
-            setTimeout(() => this.initializeSocket(), 5000);
+        }
+        
+        // Atualiza configuração do botão de ajuda
+        if (config.helpButton) {
+            helpButtonConfig = { ...helpButtonConfig, ...config.helpButton };
+            updateHelpButton();
+        }
+        
+        // Atualiza configuração do botão central
+        if (config.centerButton) {
+            centerButtonConfig = { ...centerButtonConfig, ...config.centerButton };
+            updateCenterButton();
+        }
+        
+        // Atualiza configuração do botão do mapa
+        if (config.mapButton) {
+            mapButtonConfig = { ...mapButtonConfig, ...config.mapButton };
+            updateMapButton();
+        }
+    } catch (error) {
+        console.error('Erro ao carregar configurações:', error);
+    }
+}
+
+// Atualiza o botão de ajuda com as configurações carregadas
+function updateHelpButton() {
+    const helpButton = document.getElementById('customButton');
+    
+    if (!helpButton) {
+        console.error('Botão de ajuda não encontrado no DOM');
+        return;
+    }
+    
+    console.log('Atualizando botão de ajuda com configuração:', helpButtonConfig);
+    
+    if (helpButtonConfig.enabled) {
+        helpButton.textContent = helpButtonConfig.text;
+        helpButton.style.display = 'block';
+        
+        // Remove event listeners antigos
+        const newButton = helpButton.cloneNode(true);
+        helpButton.parentNode.replaceChild(newButton, helpButton);
+        
+        // Configura o link diretamente no HTML
+        newButton.onclick = function(e) {
+            e.preventDefault();
+            console.log('Botão de ajuda clicado, abrindo URL:', helpButtonConfig.url);
+            if (helpButtonConfig.url && helpButtonConfig.url !== '#') {
+                console.log('Abrindo URL:', helpButtonConfig.url, 'no target:', helpButtonConfig.target);
+                window.open(helpButtonConfig.url, helpButtonConfig.target || '_blank');
+            } else {
+                console.warn('URL do botão de ajuda não definida ou inválida');
+            }
+        };
+        
+        console.log('Botão de ajuda configurado:', {
+            text: helpButtonConfig.text,
+            url: helpButtonConfig.url,
+            target: helpButtonConfig.target
+        });
+    } else {
+        helpButton.style.display = 'none';
+    }
+}
+
+// Função para exibir o modal do mapa
+function showMapModal() {
+    const modal = document.createElement('div');
+    modal.id = 'mapModal';
+    modal.className = 'modal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    modal.style.display = 'flex';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+    modal.style.zIndex = '1000';
+    
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+    modalContent.style.backgroundColor = '#1a1a1a';
+    modalContent.style.padding = '20px';
+    modalContent.style.borderRadius = '10px';
+    modalContent.style.maxWidth = '90%';
+    modalContent.style.maxHeight = '90%';
+    modalContent.style.overflowY = 'auto';
+    modalContent.style.textAlign = 'center';
+    modalContent.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
+    
+    // Adiciona a imagem do mapa se configurada
+    if (mapButtonConfig.image) {
+        const img = document.createElement('img');
+        img.src = mapButtonConfig.image;
+        img.alt = 'Mapa';
+        img.style.maxWidth = '100%';
+        img.style.height = 'auto';
+        img.style.borderRadius = '5px';
+        img.style.marginBottom = '15px';
+        modalContent.appendChild(img);
+    }
+    
+    // Adiciona o título se configurado
+    if (mapButtonConfig.title) {
+        const title = document.createElement('h3');
+        title.textContent = mapButtonConfig.title;
+        title.style.color = '#ffffff';
+        title.style.marginBottom = '15px';
+        modalContent.appendChild(title);
+    }
+    
+    // Adiciona a mensagem se configurada
+    if (mapButtonConfig.message) {
+        const message = document.createElement('p');
+        message.textContent = mapButtonConfig.message;
+        message.style.color = '#e0e0e0';
+        message.style.marginBottom = '20px';
+        message.style.whiteSpace = 'pre-line';
+        modalContent.appendChild(message);
+    }
+    
+    // Botão de fechar
+    const closeButton = document.createElement('button');
+    closeButton.textContent = mapButtonConfig.buttonText || 'Fechar';
+    closeButton.style.padding = '8px 20px';
+    closeButton.style.backgroundColor = '#1E59D9';
+    closeButton.style.color = 'white';
+    closeButton.style.border = 'none';
+    closeButton.style.borderRadius = '5px';
+    closeButton.style.cursor = 'pointer';
+    closeButton.style.transition = 'background-color 0.3s';
+    
+    closeButton.onmouseover = function() {
+        this.style.backgroundColor = '#3a7be0';
+    };
+    
+    closeButton.onmouseout = function() {
+        this.style.backgroundColor = '#1E59D9';
+    };
+    
+    closeButton.onclick = function() {
+        document.body.removeChild(modal);
+    };
+    
+    modalContent.appendChild(closeButton);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Fechar ao clicar fora do conteúdo
+    modal.onclick = function(event) {
+        if (event.target === modal) {
+            document.body.removeChild(modal);
+        }
+    };
+}
+
+// Atualiza o botão do mapa
+function updateMapButton() {
+    console.log('Atualizando botão do mapa com configuração:', mapButtonConfig);
+    
+    if (!mapButtonConfig.enabled) {
+        const existingButton = document.getElementById('map-area-button');
+        if (existingButton) {
+            existingButton.style.display = 'none';
+        }
+        return;
+    }
+    
+    // O botão já está no HTML, apenas atualizamos o evento de clique
+    const mapButton = document.getElementById('map-area-button');
+    if (mapButton) {
+        // Remove event listeners antigos
+        const newButton = mapButton.cloneNode(true);
+        mapButton.parentNode.replaceChild(newButton, mapButton);
+        
+        // Adiciona o novo event listener
+        newButton.onclick = function(e) {
+            e.preventDefault();
+            showMapModal();
+        };
+        
+        console.log('Botão do mapa configurado com sucesso');
+    } else {
+        console.error('Elemento do botão do mapa não encontrado no DOM');
+    }
+}
+
+// Atualiza o botão central com as configurações carregadas
+function updateCenterButton() {
+    // Verifica se o botão existe
+    let centerButton = document.getElementById('centerButton');
+    if (!centerButton) {
+        console.error('Botão central não encontrado no DOM');
+        return;
+    }
+    
+    console.log('Configuração atual do botão central:', centerButtonConfig);
+
+    // Atualiza o texto do botão
+    if (centerButtonConfig.text) {
+        centerButton.textContent = centerButtonConfig.text;
+    }
+
+    // Configura a visibilidade
+    centerButton.style.display = centerButtonConfig.enabled ? 'flex' : 'none';
+
+    // Remove event listeners antigos
+    const newButton = centerButton.cloneNode(true);
+    centerButton.parentNode.replaceChild(newButton, centerButton);
+    
+    // Adiciona o event listener de forma limpa
+    newButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const url = centerButtonConfig.url;
+        console.log('Botão central clicado, navegando para:', url);
+        
+        if (url && url !== '#') {
+            if (centerButtonConfig.target === '_blank') {
+                window.open(url, '_blank');
+            } else {
+                window.location.href = url;
+            }
+        }
+    });
+    
+    console.log('Botão central configurado com sucesso');
+}
+
+// Manipulador global de clique para o botão central
+document.addEventListener('click', function(event) {
+    // Verifica se o clique foi no botão central ou em um de seus filhos
+    const centerButton = event.target.closest('#centerButton');
+    if (centerButton) {
+        console.log('=== CLIQUE NO BOTÃO CENTRAL DETECTADO ===');
+        console.log('Elemento clicado:', event.target);
+        console.log('Configuração atual do botão:', centerButtonConfig);
+        
+        event.preventDefault();
+        event.stopPropagation();
+        
+        console.log('Tentando navegar para:', centerButtonConfig.url);
+        
+        if (centerButtonConfig.url && centerButtonConfig.url !== '#') {
+            console.log('Iniciando navegação...');
+            try {
+                if (centerButtonConfig.target === '_blank') {
+                    console.log('Abrindo em nova aba...');
+                    const newWindow = window.open(centerButtonConfig.url, '_blank');
+                    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                        console.warn('O bloqueador de pop-up pode ter impedido a abertura da nova aba.');
+                        window.location.href = centerButtonConfig.url;
+                    }
+                } else {
+                    console.log('Navegando na mesma aba...');
+                    window.location.href = centerButtonConfig.url;
+                }
+            } catch (error) {
+                console.error('Erro ao tentar navegar:', error);
+                alert('Não foi possível abrir o link. Por favor, tente novamente.');
+            }
+        } else {
+            console.warn('URL não configurada para o botão central');
         }
     }
+});
 
-    getSocket() {
-        return this.socket;
-    }
-}
-
-// Initialize socket manager when the script loads
-if (!window.socketManager) {
-    window.socketManager = new SocketManager();
-}
-
-// Start the notification system when DOM is loaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initNotificationSystem);
-} else {
-    initNotificationSystem();
-}
+// Carrega as configurações quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', function() {
+    loadButtonConfigs();
+    loadRoomsData();
+    
+    // Inicializa o botão do mapa
+    updateMapButton();
+});

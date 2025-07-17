@@ -1,0 +1,304 @@
+/* ===============================================
+   DISPOSITIVOS ANDROID (SAMSUNG, XIAOMI, MOTOROLA)
+   =============================================== */
+
+/* Correção para a barra de navegação em dispositivos Android */
+@supports (-webkit-touch-callout: none) {
+    /* Ajuste para a altura da viewport em dispositivos com barra de navegação */
+    .map-container {
+        height: calc(100vh - env(safe-area-inset-bottom) - env(safe-area-inset-top));
+        max-height: -webkit-fill-available;
+    }
+}
+
+/* Ajuste para telas com notch (entrada para câmera) */
+@supports (padding-top: env(safe-area-inset-top)) {
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+}
+
+/* Correção para dispositivos Samsung com One UI */
+@media screen and (-samsung-device-pixel-ratio: 2.75) {
+    .circle-button {
+        transform: scale(0.95);
+    }
+}
+
+/* Ajuste para dispositivos Xiaomi com MIUI */
+@supports (-moz-appearance:none) and (display:contents) {
+    .map-container {
+        min-height: -moz-available;
+    }
+}
+
+/* ===============================================
+   DISPOSITIVOS APPLE (IPHONE, IPAD)
+   =============================================== */
+
+/* Ajuste para iPhone X e superiores */
+@supports (padding: max(0px)) {
+    .help-button {
+        top: 800px !important;
+        right: max(30px, env(safe-area-inset-right) + 15px) !important;
+    }
+}
+
+/* Correção para Safari no iOS */
+@supports (-webkit-touch-callout: none) {
+    /* Corrige o comportamento de 100vh no iOS */
+    body {
+        height: -webkit-fill-available;
+    }
+    
+    /* Melhora a experiência de rolagem */
+    .map-container {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Ajuste para iPad */
+@media only screen 
+and (min-device-width: 768px) 
+and (max-device-width: 1024px) 
+and (-webkit-min-device-pixel-ratio: 2) {
+    .circle-button {
+        width: 80px !important;
+        height: 80px !important;
+        font-size: 16px !important;
+    }
+}
+
+/* ===============================================
+   AJUSTES GERAIS PARA TODOS OS DISPOSITIVOS
+   =============================================== */
+
+/* Melhora a performance de animação em dispositivos móveis */
+@media (hover: none) and (pointer: coarse) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Previne o highlight azul ao tocar em elementos */
+*:not(input):not(textarea) {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Melhora a renderização de fontes */
+body {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-size-adjust: 100%;
+}
+
+/* Ajuste para dispositivos com teclado virtual ativo */
+@media (max-height: 500px) {
+    .map-container {
+        padding: 5px !important;
+    }
+    
+    .circle-button {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 10px !important;
+    }
+}
+
+/* Estilos específicos para o botão personalizado */
+.custom-button {
+    /* Posicionamento consistente em todas as telas */
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    z-index: 2147483647 !important;
+    margin: 0 !important;
+    /* Tamanho base para telas pequenas */
+    padding: 12px 20px !important;
+    font-size: 14px !important;
+    min-width: 80px !important;
+    height: auto !important;
+    line-height: 1.5 !important;
+    /* Garante que o botão fique visível */
+    transform: translateZ(0) !important;
+    -webkit-transform: translateZ(0) !important;
+    will-change: transform !important;
+    /* Remove qualquer margem ou padding que possa afetar o posicionamento */
+    box-sizing: border-box !important;
+    /* Força o botão a ficar na frente de todos os outros elementos */
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Ajustes para telas médias */
+@media (min-width: 480px) {
+    .custom-button {
+        padding: 14px 24px !important;
+        font-size: 15px !important;
+        min-width: 90px !important;
+    }
+}
+
+/* Ajustes para telas grandes */
+@media (min-width: 768px) {
+    .custom-button {
+        padding: 16px 28px !important;
+        font-size: 16px !important;
+        min-width: 100px !important;
+    }
+}
+
+/* Ajustes para telas muito pequenas */
+@media (max-width: 360px) {
+    .help-button {
+        top: 750px !important;
+        right: 20px !important;
+        padding: 12px 24px !important;
+        font-size: 15px !important;
+    }
+}
+
+/* Ajustes para quando o teclado estiver aberto */
+@media (max-height: 300px) {
+    .custom-button {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 10px !important;
+        right: 10px !important;
+    }
+}
+
+/* Garante que o botão fique visível mesmo em telas muito pequenas */
+@media (max-width: 320px) {
+    .help-button {
+        top: 700px !important;
+        right: 15px !important;
+        padding: 10px 20px !important;
+        font-size: 14px !important;
+    }
+}
+
+/* Ajuste para dispositivos com barra de navegação */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .help-button {
+        top: 800px !important;
+        right: calc(env(safe-area-inset-right) + 15px) !important;
+    }
+}
+
+/* Ajuste para dispositivos com notch na parte inferior */
+@supports (padding-bottom: constant(safe-area-inset-bottom)) {
+    .custom-button {
+        bottom: calc(constant(safe-area-inset-bottom) + 15px) !important;
+        right: calc(constant(safe-area-inset-right) + 15px) !important;
+    }
+}
+
+/* Ajustes específicos para dispositivos Xiaomi */
+@supports (-webkit-touch-callout: none) {
+    .custom-button {
+        -webkit-transform: translateZ(0) !important;
+        transform: translateZ(0) !important;
+    }
+}
+
+/* Ajustes para navegadores Samsung */
+@supports (-ms-ime-align: auto) {
+    .custom-button {
+        -ms-transform: translateZ(0) !important;
+        transform: translateZ(0) !important;
+    }
+}
+
+/* Garante que o botão não seja afetado por transformações dos pais */
+.custom-button {
+    transform: none !important;
+    -webkit-transform: none !important;
+    -ms-transform: none !important;
+}
+
+/* Ajustes para Safari iOS */
+@supports (-webkit-touch-callout: none) {
+    .custom-button {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+    }
+}
+
+/* Ajustes para Chrome no Android */
+@supports (-webkit-overflow-scrolling: touch) {
+    .custom-button {
+        position: fixed;
+        will-change: transform;
+    }
+}
+
+/* Ajustes para navegadores Samsung */
+@supports (-ms-ime-align: auto) {
+    .custom-button {
+        transform: translateZ(0);
+    }
+}
+
+/* Ajustes para dispositivos com notche */
+@supports (padding-top: env(safe-area-inset-top)) {
+    .custom-button {
+        margin-bottom: env(safe-area-inset-bottom);
+        margin-right: env(safe-area-inset-right);
+    }
+}
+
+/* Ajustes para dispositivos com teclas de navegação virtuais */
+@media (max-height: 400px) {
+    .custom-button {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+    }
+}
+
+/* Ajuste para modo paisagem */
+@media (orientation: landscape) and (max-height: 500px) {
+    .map-container {
+        transform: scale(0.9);
+        transform-origin: top center;
+    }
+    
+    .custom-button {
+        bottom: 15px !important;
+        right: 15px !important;
+        padding: 8px 16px !important;
+        font-size: 12px !important;
+        min-width: 70px !important;
+    }
+}
+
+/* Ajuste para telas muito pequenas */
+@media (max-width: 320px) {
+    .circle-button {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 9px !important;
+    }
+    
+    .custom-button {
+        font-size: 11px !important;
+        padding: 6px 12px !important;
+        min-width: 65px !important;
+    }
+}

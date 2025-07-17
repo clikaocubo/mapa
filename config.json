@@ -1,0 +1,21 @@
+{
+  "helpButton": {
+    "enabled": true,
+    "text": "Ajuda",
+    "url": "#",
+    "target": "_blank"
+  },
+  "centerButton": {
+    "enabled": true,
+    "text": "+",
+    "url": "#",
+    "target": "_self"
+  },
+  "mapButton": {
+    "enabled": true,
+    "title": "Título do Mapa",
+    "message": "Esta é uma mensagem personalizada do mapa.\nVocê pode editar esta mensagem no arquivo config.json.",
+    "image": "assets/images/mapa.jpg",
+    "buttonText": "Fechar"
+  }
+}
